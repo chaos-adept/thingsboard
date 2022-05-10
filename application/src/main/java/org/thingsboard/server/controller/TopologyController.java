@@ -8,11 +8,15 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.asset.AssetSearchQuery;
 import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
+import org.thingsboard.server.common.data.id.EntityIdFactory;
 import org.thingsboard.server.common.data.relation.EntityRelation;
+import org.thingsboard.server.common.data.relation.EntitySearchDirection;
+import org.thingsboard.server.common.data.relation.RelationsSearchParameters;
 import org.thingsboard.server.common.data.topology.dto.Building;
 import org.thingsboard.server.common.data.topology.dto.Segments;
 import org.thingsboard.server.common.data.topology.dto.Territory;
@@ -20,6 +24,8 @@ import org.thingsboard.server.queue.util.TbCoreComponent;
 
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static org.thingsboard.server.controller.AssetController.ASSET_ID;
 import static org.thingsboard.server.controller.ControllerConstants.*;
@@ -130,12 +136,25 @@ public class TopologyController extends BaseController {
                     "The entity id, relation type, asset types, depth of the search, and other query parameters defined using complex 'AssetSearchQuery' object. " +
                     "See 'Model' tab of the Parameters for more info.", produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
-    @RequestMapping(value = "/territory/{territoryId}/buildings", method = RequestMethod.POST)
+    @RequestMapping(value = "/territory/{territoryId}/buildings", method = RequestMethod.GET)
     @ResponseBody
-    public List<Asset> findBulidingsByQuery(
-            @PathVariable(TERRITORY_ID) String strTerritoryId,
-            @RequestBody AssetSearchQuery query) throws ThingsboardException {
-        return assetController.findByQuery(query);
+    public List<Building> findBuildingsByQuery(
+            @PathVariable(TERRITORY_ID) String strTerritoryId) throws ThingsboardException {
+
+
+        RelationsSearchParameters relationParameters = new RelationsSearchParameters(
+                EntityIdFactory.getByTypeAndUuid(EntityType.ASSET, strTerritoryId),
+                EntitySearchDirection.FROM,
+                1,
+                false
+        );
+
+        AssetSearchQuery searchQuery = new AssetSearchQuery();
+        searchQuery.setAssetTypes(List.of(Segments.BUILDING.getKey()));
+        searchQuery.setRelationType("Contains");
+        searchQuery.setParameters(relationParameters);
+
+        return assetController.findByQuery(searchQuery).stream().map(Building::new).collect(Collectors.toList());
     }
 
 

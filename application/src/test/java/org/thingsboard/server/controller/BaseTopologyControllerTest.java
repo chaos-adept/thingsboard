@@ -146,23 +146,12 @@ public abstract class BaseTopologyControllerTest extends AbstractControllerTest 
                 building, Building.class, territoryId);
         Asset savedBuildingAsset = savedBuilding.getAsset();
 
-        RelationsSearchParameters relationParameters = new RelationsSearchParameters(
-                savedTerritory.getAsset().getId(),
-                EntitySearchDirection.FROM,
-                1,
-                false
-        );
-
-        AssetSearchQuery searchQuery = new AssetSearchQuery();
-        searchQuery.setAssetTypes(List.of(Segments.BUILDING.getKey()));
-        searchQuery.setRelationType("Contains");
-        searchQuery.setParameters(relationParameters);
-
-        var tr = new TypeReference<List<Asset>>() {};
-        List<Asset> loadedAssets = doPostWithResponse("/api/topology/territory/{territoryId}/buildings",
-                searchQuery, tr, territoryId);
+        var tr = new TypeReference<List<Building>>() {};
+        List<Building> loadedAssets = doGetTyped("/api/topology/territory/{territoryId}/buildings",
+                tr, territoryId);
 
         Assert.assertEquals(loadedAssets.size(), 1);
+        Assert.assertEquals(loadedAssets.get(0).getAsset().getUuidId(), savedBuildingAsset.getUuidId());
     }
 
 }
