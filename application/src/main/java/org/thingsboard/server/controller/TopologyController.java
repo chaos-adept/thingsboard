@@ -30,9 +30,12 @@ import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.EntityIdFactory;
 import org.thingsboard.server.common.data.relation.EntityRelation;
+import org.thingsboard.server.common.data.relation.EntityRelationsQuery;
 import org.thingsboard.server.common.data.relation.EntitySearchDirection;
+import org.thingsboard.server.common.data.relation.RelationEntityTypeFilter;
 import org.thingsboard.server.common.data.relation.RelationsSearchParameters;
 import org.thingsboard.server.common.data.topology.dto.Building;
+import org.thingsboard.server.common.data.topology.dto.DeviceAssigment;
 import org.thingsboard.server.common.data.topology.dto.Room;
 import org.thingsboard.server.common.data.topology.dto.Segments;
 import org.thingsboard.server.common.data.topology.dto.Territory;
@@ -201,6 +204,62 @@ public class TopologyController extends BaseController {
         relationController.saveRelation(entityRelation);
 
         return savedRoom;
+    }
+
+    @ApiOperation(value = "Create Or Update Room (saveAsset)",
+            notes = "Creates or Updates the Asset. When creating assigment, platform generates Asset Id as " + UUID_WIKI_LINK +
+                    "The newly created Asset id will be present in the response. " +
+                    "Specify existing Asset id to update the assigment. " +
+                    "Referencing non-existing Asset Id will cause 'Not Found' error." + TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH, produces = MediaType.APPLICATION_JSON_VALUE)
+    @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
+    @RequestMapping(value = "/territory/{territoryId}/building/{buildingId}/room/{roomId}/deviceAssigment", method = RequestMethod.POST)
+    @ResponseBody
+    public DeviceAssigment saveRoomAsset(@ApiParam(value = "A JSON value representing the assigment.")
+                              @PathVariable(TERRITORY_ID) String strTerritoryId,
+                              @PathVariable(BUILDING_ID) String strBuildingId,
+                              @PathVariable(ROOM_ID) String strRoomId,
+                              @RequestBody DeviceAssigment assigment) throws ThingsboardException {
+        //todo log data correctly according to the architecture
+        Room building = new Room(assetController.getAssetById(strRoomId));
+
+        //todo verify that building belongs to territory
+
+        EntityRelation entityRelation = new EntityRelation();
+        entityRelation.setFrom(building.getAsset().getId());
+        entityRelation.setType(RELATION_TYPE_CONTAINS);
+        entityRelation.setTo(EntityIdFactory.getByTypeAndUuid(EntityType.DEVICE, assigment.getDeviceId()));
+
+        relationController.saveRelation(entityRelation);
+
+        return assigment;
+    }
+
+    @ApiOperation(value = "Find related device assigments (findByQuery)",
+            notes = "Returns all assets that are related to the specific entity. " +
+                    "The entity id, relation type, asset types, depth of the search, and other query parameters defined using complex 'AssetSearchQuery' object. " +
+                    "See 'Model' tab of the Parameters for more info.", produces = MediaType.APPLICATION_JSON_VALUE)
+    @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
+    @RequestMapping(value = "/territory/{territoryId}/building/{buildingId}/rooms", method = RequestMethod.GET)
+    @ResponseBody
+    public List<DeviceAssigment> findRoomsByQuery(
+            @PathVariable(TERRITORY_ID) String strTerritoryId,
+            @PathVariable(BUILDING_ID) String strBuildingId,
+            @PathVariable(ROOM_ID) String strRoomId
+    ) throws ThingsboardException {
+
+
+        RelationsSearchParameters relationParameters = new RelationsSearchParameters(
+                EntityIdFactory.getByTypeAndUuid(EntityType.ASSET, strTerritoryId),
+                EntitySearchDirection.FROM,
+                1,
+                false
+        );
+
+        EntityRelationsQuery searchQuery = new AssetSearchQuery();
+        searchQuery.setFilters(List.of(RelationEntityTypeFilter));
+        searchQuery.setParameters(relationParameters);
+
+        return relationController.findByQuery(searchQuery).stream().map(Room::new).collect(Collectors.toList());
     }
 
     @ApiOperation(value = "Find related buildings (findByQuery)",

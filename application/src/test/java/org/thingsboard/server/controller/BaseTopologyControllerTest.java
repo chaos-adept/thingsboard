@@ -21,12 +21,14 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
+import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.common.data.topology.dto.AssetWrapper;
 import org.thingsboard.server.common.data.topology.dto.Building;
+import org.thingsboard.server.common.data.topology.dto.DeviceAssigment;
 import org.thingsboard.server.common.data.topology.dto.Room;
 import org.thingsboard.server.common.data.topology.dto.Segments;
 import org.thingsboard.server.common.data.topology.dto.Territory;
@@ -109,10 +111,7 @@ public abstract class BaseTopologyControllerTest extends AbstractControllerTest 
 
         String buildingId = createBuilding(territoryId).getId();
 
-        Asset asset = new Asset();
-        asset.setName("My asset");
-        Room savedRoom = doPost("/api/topology/territory/{territoryId}/building/{buildingId}/room",
-                new Room(asset), Room.class, territoryId, buildingId);
+        Room savedRoom = createRoom(territoryId, buildingId);
 
         verifyCreatedAsset(savedRoom, Segments.ROOM.getKey());
 
@@ -124,6 +123,14 @@ public abstract class BaseTopologyControllerTest extends AbstractControllerTest 
         Room foundBuilding = doGet("/api/topology/territory/{territoryId}/building/{buildingId}/room/{id}", Room.class,
                 territoryId, buildingId, savedRoom.getId());
         Assert.assertEquals(foundBuilding.getAsset().getName(), savedRoom.getAsset().getName());
+    }
+
+    private Room createRoom(String territoryId, String buildingId) throws Exception {
+        Asset asset = new Asset();
+        asset.setName("My room asset");
+        Room savedRoom = doPost("/api/topology/territory/{territoryId}/building/{buildingId}/room",
+                new Room(asset), Room.class, territoryId, buildingId);
+        return savedRoom;
     }
 
     @Test
@@ -149,8 +156,31 @@ public abstract class BaseTopologyControllerTest extends AbstractControllerTest 
 
 
     @Test
-    @Ignore
-    public void testAddDevicesToRooms() {
+    public void testAddDevicesToRooms() throws Exception {
+        Territory territory = createTerritory();
+        Building building = createBuilding(territory.getId());
+        Room room = createRoom(territory.getId(), building.getId());
+
+        Device device = new Device();
+        device.setName("My device");
+        device.setType("default");
+        Device savedDevice = doPost("/api/device", device, Device.class);
+        String deviceId = savedDevice.getId().getId().toString();
+
+
+        DeviceAssigment deviceAssigment = DeviceAssigment.builder().deviceId(deviceId).build();
+        DeviceAssigment savedDeviceAssigment = doPost(
+                "/api/topology/territory/{territoryId}/building/{buildingId}/room/{roomId}/deviceAssigment",
+                deviceAssigment, DeviceAssigment.class,
+                territory.getId(), building.getId(), room.getId());
+
+        //todo get list of devices and verify that device is presented
+        var tr = new TypeReference<List<DeviceAssigment>>() {};
+        List<DeviceAssigment> deviceList = doGetTyped(
+                "/api/topology/territory/{territoryId}/building/{buildingId}/room/{roomId}/deviceAssigments",
+                tr,
+                territory.getId(), building.getId(), room.getId());
+        Assert.assertEquals(deviceList.get(0).getDeviceId(), device.getId());
         Assert.fail("not implemented");
     }
 
