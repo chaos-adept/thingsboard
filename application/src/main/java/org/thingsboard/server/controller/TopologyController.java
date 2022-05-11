@@ -220,12 +220,12 @@ public class TopologyController extends BaseController {
                               @PathVariable(ROOM_ID) String strRoomId,
                               @RequestBody DeviceAssigment assigment) throws ThingsboardException {
         //todo log data correctly according to the architecture
-        Room building = new Room(assetController.getAssetById(strRoomId));
+        Room room = new Room(assetController.getAssetById(strRoomId));
 
-        //todo verify that building belongs to territory
+        //todo verify that room belongs to territory
 
         EntityRelation entityRelation = new EntityRelation();
-        entityRelation.setFrom(building.getAsset().getId());
+        entityRelation.setFrom(room.getAsset().getId());
         entityRelation.setType(RELATION_TYPE_CONTAINS);
         entityRelation.setTo(EntityIdFactory.getByTypeAndUuid(EntityType.DEVICE, assigment.getDeviceId()));
 
@@ -239,27 +239,28 @@ public class TopologyController extends BaseController {
                     "The entity id, relation type, asset types, depth of the search, and other query parameters defined using complex 'AssetSearchQuery' object. " +
                     "See 'Model' tab of the Parameters for more info.", produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
-    @RequestMapping(value = "/territory/{territoryId}/building/{buildingId}/rooms", method = RequestMethod.GET)
+    @RequestMapping(value = "/territory/{territoryId}/building/{buildingId}/room/{roomId}/deviceAssignments", method = RequestMethod.GET)
     @ResponseBody
-    public List<DeviceAssigment> findRoomsByQuery(
+    public List<DeviceAssigment> findDevicesByQuery(
             @PathVariable(TERRITORY_ID) String strTerritoryId,
             @PathVariable(BUILDING_ID) String strBuildingId,
             @PathVariable(ROOM_ID) String strRoomId
     ) throws ThingsboardException {
-
-
         RelationsSearchParameters relationParameters = new RelationsSearchParameters(
-                EntityIdFactory.getByTypeAndUuid(EntityType.ASSET, strTerritoryId),
+                EntityIdFactory.getByTypeAndUuid(EntityType.ASSET, strRoomId),
                 EntitySearchDirection.FROM,
                 1,
                 false
         );
 
-        EntityRelationsQuery searchQuery = new AssetSearchQuery();
-        searchQuery.setFilters(List.of(RelationEntityTypeFilter));
+        EntityRelationsQuery searchQuery = new EntityRelationsQuery();
+        searchQuery.setFilters(List.of(
+                new RelationEntityTypeFilter(RELATION_TYPE_CONTAINS, List.of(EntityType.ASSET, EntityType.DEVICE))));
         searchQuery.setParameters(relationParameters);
 
-        return relationController.findByQuery(searchQuery).stream().map(Room::new).collect(Collectors.toList());
+        return relationController.findByQuery(searchQuery).stream()
+                .map(r -> new DeviceAssigment(r.getTo().getId().toString()))
+                .collect(Collectors.toList());
     }
 
     @ApiOperation(value = "Find related buildings (findByQuery)",

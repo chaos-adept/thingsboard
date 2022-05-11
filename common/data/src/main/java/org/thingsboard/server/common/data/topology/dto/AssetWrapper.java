@@ -31,6 +31,6 @@ public class AssetWrapper {
 
     @JsonIgnore
     public String getId() {
-        return asset.getId().getId().toString();
+        return asset.getUuidId().toString();
     }
 }

@@ -177,11 +177,10 @@ public abstract class BaseTopologyControllerTest extends AbstractControllerTest 
         //todo get list of devices and verify that device is presented
         var tr = new TypeReference<List<DeviceAssigment>>() {};
         List<DeviceAssigment> deviceList = doGetTyped(
-                "/api/topology/territory/{territoryId}/building/{buildingId}/room/{roomId}/deviceAssigments",
+                "/api/topology/territory/{territoryId}/building/{buildingId}/room/{roomId}/deviceAssignments",
                 tr,
                 territory.getId(), building.getId(), room.getId());
-        Assert.assertEquals(deviceList.get(0).getDeviceId(), device.getId());
-        Assert.fail("not implemented");
+        Assert.assertEquals(deviceList.get(0).getDeviceId(), savedDevice.getId().getId().toString());
     }
 
     private void verifyCreatedAsset(AssetWrapper wrapper, String expectedType) {
