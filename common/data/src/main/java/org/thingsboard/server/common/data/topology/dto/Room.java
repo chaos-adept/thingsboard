@@ -15,22 +15,14 @@
  */
 package org.thingsboard.server.common.data.topology.dto;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
 import org.thingsboard.server.common.data.asset.Asset;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
+import lombok.NoArgsConstructor;
 
-@Data
-@AllArgsConstructor
 @NoArgsConstructor
-public class AssetWrapper {
+public class Room extends AssetWrapper {
 
-    private Asset asset;
-
-    @JsonIgnore
-    public String getId() {
-        return asset.getId().getId().toString();
+    public Room(Asset asset) {
+        super(asset);
     }
 }

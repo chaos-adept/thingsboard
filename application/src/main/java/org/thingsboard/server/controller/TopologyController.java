@@ -33,6 +33,7 @@ import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.EntitySearchDirection;
 import org.thingsboard.server.common.data.relation.RelationsSearchParameters;
 import org.thingsboard.server.common.data.topology.dto.Building;
+import org.thingsboard.server.common.data.topology.dto.Room;
 import org.thingsboard.server.common.data.topology.dto.Segments;
 import org.thingsboard.server.common.data.topology.dto.Territory;
 import org.thingsboard.server.queue.util.TbCoreComponent;
@@ -40,7 +41,6 @@ import org.thingsboard.server.queue.util.TbCoreComponent;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static org.thingsboard.server.controller.AssetController.ASSET_ID;
 import static org.thingsboard.server.controller.ControllerConstants.*;
@@ -53,6 +53,9 @@ import static org.thingsboard.server.controller.ControllerConstants.*;
 public class TopologyController extends BaseController {
 
     public static final String TERRITORY_ID = "territoryId";
+    public static final String BUILDING_ID = "buildingId";
+    public static final String ROOM_ID = "roomId";
+    public static final String RELATION_TYPE_CONTAINS = "Contains";
 
     @Autowired
     private AssetController assetController;
@@ -80,10 +83,10 @@ public class TopologyController extends BaseController {
                     "If the user has the authority of 'Customer User', the server checks that the asset is assigned to the same customer." + TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH
             , produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
-    @RequestMapping(value = "/territory/{assetId}", method = RequestMethod.GET)
+    @RequestMapping(value = "/territory/{territoryId}", method = RequestMethod.GET)
     @ResponseBody
     public Territory getTerritoryById(@ApiParam(value = ASSET_ID_PARAM_DESCRIPTION)
-                              @PathVariable(ASSET_ID) String strAssetId) throws ThingsboardException {
+                              @PathVariable(TERRITORY_ID) String strAssetId) throws ThingsboardException {
         return Territory.from(assetController.getAssetById(strAssetId));
     }
 
@@ -102,29 +105,27 @@ public class TopologyController extends BaseController {
         return Territory.from(assetController.saveAsset(asset.getAsset()));
     }
 
-
     @ApiOperation(value = "Create Or Update Buldings (saveAsset)",
-            notes = "Creates or Updates the Asset. When creating asset, platform generates Asset Id as " + UUID_WIKI_LINK +
+            notes = "Creates or Updates the Asset. When creating building, platform generates Asset Id as " + UUID_WIKI_LINK +
                     "The newly created Asset id will be present in the response. " +
-                    "Specify existing Asset id to update the asset. " +
+                    "Specify existing Asset id to update the building. " +
                     "Referencing non-existing Asset Id will cause 'Not Found' error." + TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH, produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/territory/{territoryId}/building", method = RequestMethod.POST)
     @ResponseBody
-    public Building saveBuildingAsset(@ApiParam(value = "A JSON value representing the asset.")
+    public Building saveBuildingAsset(@ApiParam(value = "A JSON value representing the building.")
                                       @PathVariable(TERRITORY_ID) String strTerritoryId,
-                                      @RequestBody Building asset) throws ThingsboardException {
-        checkAndSetType(asset.getAsset(), Segments.BUILDING);
+                                      @RequestBody Building building) throws ThingsboardException {
+        checkAndSetType(building.getAsset(), Segments.BUILDING);
         //todo log data correctly according to the architecture
         Territory territory = getAssetById(strTerritoryId);
 
 
-        Building savedBuilding = new Building(assetController.saveAsset(asset.getAsset()));
+        Building savedBuilding = new Building(assetController.saveAsset(building.getAsset()));
 
-        //todo make a relation
         EntityRelation entityRelation = new EntityRelation();
         entityRelation.setFrom(territory.getAsset().getId());
-        entityRelation.setType("Contains"); //todo extract to constants
+        entityRelation.setType(RELATION_TYPE_CONTAINS);
         entityRelation.setTo(savedBuilding.getAsset().getId());
 
         relationController.saveRelation(entityRelation);
@@ -138,11 +139,11 @@ public class TopologyController extends BaseController {
                     "If the user has the authority of 'Customer User', the server checks that the asset is assigned to the same customer." + TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH
             , produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
-    @RequestMapping(value = "/territory/{territoryId}/building/{assetId}", method = RequestMethod.GET)
+    @RequestMapping(value = "/territory/{territoryId}/building/{buildingId}", method = RequestMethod.GET)
     @ResponseBody
     public Building getBuildingById(@ApiParam(value = ASSET_ID_PARAM_DESCRIPTION)
                                           @PathVariable(TERRITORY_ID) String strTerritoryId,
-                                    @PathVariable(ASSET_ID) String strAssetId) throws ThingsboardException {
+                                    @PathVariable(BUILDING_ID) String strAssetId) throws ThingsboardException {
         return new Building(assetController.getAssetById(strAssetId));
     }
 
@@ -166,10 +167,83 @@ public class TopologyController extends BaseController {
 
         AssetSearchQuery searchQuery = new AssetSearchQuery();
         searchQuery.setAssetTypes(List.of(Segments.BUILDING.getKey()));
-        searchQuery.setRelationType("Contains");
+        searchQuery.setRelationType(RELATION_TYPE_CONTAINS);
         searchQuery.setParameters(relationParameters);
 
         return assetController.findByQuery(searchQuery).stream().map(Building::new).collect(Collectors.toList());
+    }
+
+    @ApiOperation(value = "Create Or Update Room (saveAsset)",
+            notes = "Creates or Updates the Asset. When creating asset, platform generates Asset Id as " + UUID_WIKI_LINK +
+                    "The newly created Asset id will be present in the response. " +
+                    "Specify existing Asset id to update the asset. " +
+                    "Referencing non-existing Asset Id will cause 'Not Found' error." + TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH, produces = MediaType.APPLICATION_JSON_VALUE)
+    @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
+    @RequestMapping(value = "/territory/{territoryId}/building/{buildingId}/room", method = RequestMethod.POST)
+    @ResponseBody
+    public Room saveRoomAsset(@ApiParam(value = "A JSON value representing the asset.")
+                              @PathVariable(TERRITORY_ID) String strTerritoryId,
+                              @PathVariable(BUILDING_ID) String strBuildingId,
+                              @RequestBody Room asset) throws ThingsboardException {
+        checkAndSetType(asset.getAsset(), Segments.ROOM);
+        //todo log data correctly according to the architecture
+        Building building = new Building(assetController.getAssetById(strBuildingId));
+
+        //todo verify that building belogs to territory
+
+        Room savedRoom = new Room(assetController.saveAsset(asset.getAsset()));
+
+        EntityRelation entityRelation = new EntityRelation();
+        entityRelation.setFrom(building.getAsset().getId());
+        entityRelation.setType(RELATION_TYPE_CONTAINS);
+        entityRelation.setTo(savedRoom.getAsset().getId());
+
+        relationController.saveRelation(entityRelation);
+
+        return savedRoom;
+    }
+
+    @ApiOperation(value = "Find related buildings (findByQuery)",
+            notes = "Returns all assets that are related to the specific entity. " +
+                    "The entity id, relation type, asset types, depth of the search, and other query parameters defined using complex 'AssetSearchQuery' object. " +
+                    "See 'Model' tab of the Parameters for more info.", produces = MediaType.APPLICATION_JSON_VALUE)
+    @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
+    @RequestMapping(value = "/territory/{territoryId}/building/{buildingId}/rooms", method = RequestMethod.GET)
+    @ResponseBody
+    public List<Room> findRoomsByQuery(
+            @PathVariable(TERRITORY_ID) String strTerritoryId,
+            @PathVariable(BUILDING_ID) String strBuildingId
+            ) throws ThingsboardException {
+
+
+        RelationsSearchParameters relationParameters = new RelationsSearchParameters(
+                EntityIdFactory.getByTypeAndUuid(EntityType.ASSET, strTerritoryId),
+                EntitySearchDirection.FROM,
+                1,
+                false
+        );
+
+        AssetSearchQuery searchQuery = new AssetSearchQuery();
+        searchQuery.setAssetTypes(List.of(Segments.ROOM.getKey()));
+        searchQuery.setRelationType(RELATION_TYPE_CONTAINS);
+        searchQuery.setParameters(relationParameters);
+
+        return assetController.findByQuery(searchQuery).stream().map(Room::new).collect(Collectors.toList());
+    }
+
+    @ApiOperation(value = "Get Territory (getAssetById)",
+            notes = "Fetch the Topology object based on the provided Asset Id. " +
+                    "If the user has the authority of 'Tenant Administrator', the server checks that the asset is owned by the same tenant. " +
+                    "If the user has the authority of 'Customer User', the server checks that the asset is assigned to the same customer." + TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH
+            , produces = MediaType.APPLICATION_JSON_VALUE)
+    @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
+    @RequestMapping(value = "/territory/{territoryId}/building/{buildingId}/room/{roomId}", method = RequestMethod.GET)
+    @ResponseBody
+    public Room getBuildingById(@ApiParam(value = ASSET_ID_PARAM_DESCRIPTION)
+                                    @PathVariable(TERRITORY_ID) String strTerritoryId,
+                                    @PathVariable(BUILDING_ID) String strBuildingId,
+                                    @PathVariable(ROOM_ID) String strRoomId) throws ThingsboardException {
+        return new Room(assetController.getAssetById(strRoomId));
     }
 
 

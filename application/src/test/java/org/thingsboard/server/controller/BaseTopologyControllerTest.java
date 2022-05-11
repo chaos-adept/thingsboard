@@ -19,15 +19,15 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.asset.Asset;
-import org.thingsboard.server.common.data.asset.AssetSearchQuery;
-import org.thingsboard.server.common.data.relation.EntitySearchDirection;
-import org.thingsboard.server.common.data.relation.RelationsSearchParameters;
 import org.thingsboard.server.common.data.security.Authority;
+import org.thingsboard.server.common.data.topology.dto.AssetWrapper;
 import org.thingsboard.server.common.data.topology.dto.Building;
+import org.thingsboard.server.common.data.topology.dto.Room;
 import org.thingsboard.server.common.data.topology.dto.Segments;
 import org.thingsboard.server.common.data.topology.dto.Territory;
 
@@ -76,74 +76,61 @@ public abstract class BaseTopologyControllerTest extends AbstractControllerTest 
         Territory territory = Territory.from(asset);
         Territory savedTerritory = doPost("/api/topology/territory", territory, Territory.class);
 
-        Asset savedAsset = savedTerritory.getAsset();
+        verifyCreatedAsset(savedTerritory, Segments.TERRITORY.getKey());
 
-        Assert.assertNotNull(savedAsset);
-        Assert.assertNotNull(savedAsset.getId());
-        Assert.assertTrue(savedAsset.getCreatedTime() > 0);
-        Assert.assertEquals(savedTenant.getId(), savedAsset.getTenantId());
-        Assert.assertNotNull(savedAsset.getCustomerId());
-        Assert.assertEquals(NULL_UUID, savedAsset.getCustomerId().getId());
-        Assert.assertEquals(asset.getName(), savedAsset.getName());
-        Assert.assertNull(asset.getType());
-        Assert.assertEquals(savedAsset.getType(), expectedType);
-
-        savedAsset.setName("My new asset");
+        savedTerritory.getAsset().setName("My new asset");
         //todo add test to handle unexpected type
-        doPost("/api/topology/territory", Territory.from(savedAsset), Territory.class);
+        doPost("/api/topology/territory", Territory.from(savedTerritory.getAsset()), Territory.class);
 
-        Territory foundAsset = doGet("/api/topology/" + savedAsset.getId().getId().toString(), Territory.class);
-        Assert.assertEquals(foundAsset.getAsset().getName(), savedAsset.getName());
+        Territory foundAsset = doGet("/api/topology/" + savedTerritory.getId(), Territory.class);
+        Assert.assertEquals(foundAsset.getAsset().getName(), savedTerritory.getAsset().getName());
     }
 
     @Test
-    public void testSaveBuildings() throws Exception {
-        Asset territoryAsset = new Asset();
-        territoryAsset.setName("My territory");
-        Territory territory = new Territory(territoryAsset);
-        Territory savedTerritory = doPost("/api/topology/territory", territory, Territory.class);
-        String territoryId = savedTerritory.getAsset().getId().toString();
+    public void testSaveBuilding() throws Exception {
+        String territoryId = createTerritory().getId();
 
-        Asset asset = new Asset();
-        asset.setName("My building");
-        String expectedType = "Building";
-        Building building = new Building(asset);
-        Building savedBuilding = doPost("/api/topology/territory/{territoryId}/building",
-                building, Building.class, territoryId);
-        Asset savedBuildingAsset = savedBuilding.getAsset();
+        Building savedBuilding = createBuilding(territoryId);
 
-        Assert.assertNotNull(savedBuildingAsset);
-        Assert.assertNotNull(savedBuildingAsset.getId());
-        Assert.assertTrue(savedBuildingAsset.getCreatedTime() > 0);
-        Assert.assertEquals(savedTenant.getId(), savedBuildingAsset.getTenantId());
-        Assert.assertNotNull(savedBuildingAsset.getCustomerId());
-        Assert.assertEquals(NULL_UUID, savedBuildingAsset.getCustomerId().getId());
-        Assert.assertEquals(asset.getName(), savedBuildingAsset.getName());
-        Assert.assertNull(asset.getType());
-        Assert.assertEquals(savedBuildingAsset.getType(), expectedType);
+        verifyCreatedAsset(savedBuilding, Segments.BUILDING.getKey());
 
-        savedBuildingAsset.setName("My new asset");
+        savedBuilding.getAsset().setName("My new asset");
         //todo add test to handle unexpected type
-        doPost("/api/topology/territory/{territoryId}/building", Territory.from(savedBuildingAsset), Territory.class, territoryId);
+        doPost("/api/topology/territory/{territoryId}/building", Territory.from(savedBuilding.getAsset()), Territory.class, territoryId);
 
         Building foundBuilding = doGet("/api/topology/territory/{territoryId}/building/{id}", Building.class,
-                territoryId, savedBuildingAsset.getId().getId().toString());
-        Assert.assertEquals(foundBuilding.getAsset().getName(), savedBuildingAsset.getName());
+                territoryId, savedBuilding.getId());
+        Assert.assertEquals(foundBuilding.getAsset().getName(), savedBuilding.getAsset().getName());
+    }
+
+    @Test
+    public void testSaveRoom() throws Exception {
+        String territoryId = createTerritory().getId();
+
+        String buildingId = createBuilding(territoryId).getId();
+
+        Asset asset = new Asset();
+        asset.setName("My asset");
+        Room savedRoom = doPost("/api/topology/territory/{territoryId}/building/{buildingId}/room",
+                new Room(asset), Room.class, territoryId, buildingId);
+
+        verifyCreatedAsset(savedRoom, Segments.ROOM.getKey());
+
+        savedRoom.getAsset().setName("My new asset");
+        //todo add test to handle unexpected type
+        doPost("/api/topology/territory/{territoryId}/building/{buildingId}/room",
+                new Room(savedRoom.getAsset()), Room.class, territoryId, buildingId);
+
+        Room foundBuilding = doGet("/api/topology/territory/{territoryId}/building/{buildingId}/room/{id}", Room.class,
+                territoryId, buildingId, savedRoom.getId());
+        Assert.assertEquals(foundBuilding.getAsset().getName(), savedRoom.getAsset().getName());
     }
 
     @Test
     public void testGetBuildings() throws Exception {
-        Asset territoryAsset = new Asset();
-        territoryAsset.setName("My territory");
-        Territory territory = new Territory(territoryAsset);
-        Territory savedTerritory = doPost("/api/topology/territory", territory, Territory.class);
-        String territoryId = savedTerritory.getAsset().getId().toString();
+        String territoryId = createTerritory().getId();
 
-        Asset asset = new Asset();
-        asset.setName("My building");
-        Building building = new Building(asset);
-        Building savedBuilding = doPost("/api/topology/territory/{territoryId}/building",
-                building, Building.class, territoryId);
+        Building savedBuilding = createBuilding(territoryId);
         Asset savedBuildingAsset = savedBuilding.getAsset();
 
         var tr = new TypeReference<List<Building>>() {};
@@ -153,5 +140,53 @@ public abstract class BaseTopologyControllerTest extends AbstractControllerTest 
         Assert.assertEquals(loadedAssets.size(), 1);
         Assert.assertEquals(loadedAssets.get(0).getAsset().getUuidId(), savedBuildingAsset.getUuidId());
     }
+
+    @Test
+    @Ignore
+    public void testGetTerritories() {
+        Assert.fail("not implemented");
+    }
+
+
+    @Test
+    @Ignore
+    public void testAddDevicesToRooms() {
+        Assert.fail("not implemented");
+    }
+
+    private void verifyCreatedAsset(AssetWrapper wrapper, String expectedType) {
+        Asset savedAsset = wrapper.getAsset();
+        Assert.assertNotNull(savedAsset);
+        Assert.assertNotNull(savedAsset.getId());
+        Assert.assertTrue(savedAsset.getCreatedTime() > 0);
+        Assert.assertEquals(savedTenant.getId(), savedAsset.getTenantId());
+        Assert.assertNotNull(savedAsset.getCustomerId());
+        Assert.assertEquals(NULL_UUID, savedAsset.getCustomerId().getId());
+//        Assert.assertEquals(asset.getName(), savedAsset.getName());
+//        Assert.assertNull(asset.getType());
+        Assert.assertEquals(savedAsset.getType(), expectedType);
+    }
+
+    private Building createBuilding(String territoryId) throws Exception {
+        Asset asset = new Asset();
+        asset.setName("My building");
+        Building building = new Building(asset);
+        Building savedBuilding = doPost("/api/topology/territory/{territoryId}/building",
+                building, Building.class, territoryId);
+        return savedBuilding;
+    }
+
+    private Territory createTerritory() throws Exception {
+        return createTerritory("My Territory");
+    }
+
+    private Territory createTerritory(String name) throws Exception {
+        Asset territoryAsset = new Asset();
+        territoryAsset.setName("My territory");
+        Territory territory = new Territory(territoryAsset);
+        Territory savedTerritory = doPost("/api/topology/territory", territory, Territory.class);
+        return savedTerritory;
+    }
+
 
 }
