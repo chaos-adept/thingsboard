@@ -255,7 +255,7 @@ public class TopologyController extends BaseController {
 
         EntityRelationsQuery searchQuery = new EntityRelationsQuery();
         searchQuery.setFilters(List.of(
-                new RelationEntityTypeFilter(RELATION_TYPE_CONTAINS, List.of(EntityType.ASSET, EntityType.DEVICE))));
+                new RelationEntityTypeFilter(RELATION_TYPE_CONTAINS, List.of(EntityType.DEVICE))));
         searchQuery.setParameters(relationParameters);
 
         return relationController.findByQuery(searchQuery).stream()
