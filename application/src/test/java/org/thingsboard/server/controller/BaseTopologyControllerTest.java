@@ -84,7 +84,7 @@ public abstract class BaseTopologyControllerTest extends AbstractControllerTest 
         //todo add test to handle unexpected type
         doPost("/api/topology/territory", Territory.from(savedTerritory.getAsset()), Territory.class);
 
-        Territory foundAsset = doGet("/api/topology/" + savedTerritory.getId(), Territory.class);
+        Territory foundAsset = doGet("/api/topology/territory/{id}", Territory.class, savedTerritory.getId());
         Assert.assertEquals(foundAsset.getAsset().getName(), savedTerritory.getAsset().getName());
     }
 

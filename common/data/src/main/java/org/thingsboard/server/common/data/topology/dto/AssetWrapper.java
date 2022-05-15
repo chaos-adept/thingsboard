@@ -18,6 +18,8 @@ package org.thingsboard.server.common.data.topology.dto;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+
+import org.apache.commons.lang3.StringUtils;
 import org.thingsboard.server.common.data.asset.Asset;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -25,12 +27,14 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class AssetWrapper {
+public abstract class AssetWrapper {
 
-    private Asset asset;
+    private String id;
+    private String name;
 
-    @JsonIgnore
-    public String getId() {
-        return asset.getUuidId().toString();
+    public boolean hasId() {
+        return StringUtils.isEmpty(id);
     }
+
+    public abstract String getType();
 }

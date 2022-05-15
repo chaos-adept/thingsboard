@@ -22,11 +22,16 @@ import org.thingsboard.server.common.data.asset.Asset;
 @Data
 @NoArgsConstructor
 public class Territory extends AssetWrapper {
-    public Territory(Asset asset) {
-        super(asset);
+    public Territory() {
+        super();
     }
 
     public static Territory from(Asset savedAsset) {
         return new Territory(savedAsset);
+    }
+
+    @Override
+    public String getType() {
+        return Segments.TERRITORY.getKey();
     }
 }
