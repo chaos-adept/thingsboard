@@ -110,3 +110,15 @@ To change Grafana password you need to update `GF_SECURITY_ADMIN_PASSWORD` envir
 Dashboards are loaded from `./monitoring/grafana/provisioning/dashboards` directory.
 
 If you want to add new monitoring jobs for Prometheus update `./monitoring/prometheus/prometheus.yml` file.
+
+## Standalone Image
+
+This Image can be built by command from the root folder
+`docker build -t thingsboard . -f docker/Dockerfile`
+or
+`docker build -t <hub-user>/<repo-name>[:<tag>] . -f docker/Dockerfile `
+`docker build -t chaosadept/thingsboard:latest . -f docker/Dockerfile `
+and then you can publish it to subsequence deployments
+
+`docker push <hub-user>/<repo-name>:<tag>`
+`docker push chaosadept/thingsboard:latest`
