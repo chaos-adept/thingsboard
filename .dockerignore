@@ -1,7 +1,15 @@
+#ignore all by default
+**
+
+
 .git
 .idea
 docker
 .gitignore
+
+!application/target/*-boot.jar
+!application/target/conf/*
+!application/target/data/*
 
 # Ignore unnecessary files inside allowed directories
 # This should go after the allowed directories
