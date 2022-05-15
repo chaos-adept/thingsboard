@@ -18,6 +18,7 @@ package org.thingsboard.server.controller;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import lombok.RequiredArgsConstructor;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
@@ -26,7 +27,6 @@ import org.springframework.web.bind.annotation.*;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.asset.AssetSearchQuery;
-import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.EntityIdFactory;
@@ -35,16 +35,13 @@ import org.thingsboard.server.common.data.relation.EntityRelationsQuery;
 import org.thingsboard.server.common.data.relation.EntitySearchDirection;
 import org.thingsboard.server.common.data.relation.RelationEntityTypeFilter;
 import org.thingsboard.server.common.data.relation.RelationsSearchParameters;
-import org.thingsboard.server.common.data.topology.dto.Building;
-import org.thingsboard.server.common.data.topology.dto.DeviceAssigment;
-import org.thingsboard.server.common.data.topology.dto.Room;
-import org.thingsboard.server.common.data.topology.dto.Segments;
-import org.thingsboard.server.common.data.topology.dto.Territory;
+import org.thingsboard.server.common.data.topology.dto.*;
 import org.thingsboard.server.controller.converters.TopologyConverter;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
 import java.util.List;
-import java.util.Objects;
 import java.util.stream.Collectors;
 
 import static org.thingsboard.server.controller.ControllerConstants.*;
@@ -82,7 +79,7 @@ public class TopologyController extends BaseController {
     public Territory getTerritoryById(
                               @ApiParam(value = TERRITORY_ID_PARAM_DESCRIPTION)
                               @PathVariable(TERRITORY_ID) String strAssetId) throws ThingsboardException {
-        return converter.from(assetController.getAssetById(strAssetId));
+        return getById(Territory.class, strAssetId);
     }
 
 
@@ -96,10 +93,9 @@ public class TopologyController extends BaseController {
     @ResponseBody
     public Territory saveAsset(
             @ApiParam(value = "A JSON value representing the asset.") @RequestBody Territory territory) throws ThingsboardException {
-        Asset asset = converter.from(territory);
-        checkAndSetType(asset, Segments.TERRITORY);
-        //todo log data correctly according to the architecture
-        return Territory.from(assetController.saveAsset(asset));
+        Asset postedAsset = converter.from(territory);
+        Asset savedAsset = assetController.saveAsset(postedAsset);
+        return converter.assign(territory.getClass(), savedAsset);
     }
 
     @ApiOperation(value = "Create Or Update Buldings (saveAsset)",
@@ -114,16 +110,7 @@ public class TopologyController extends BaseController {
                                       @PathVariable(TERRITORY_ID) String strTerritoryId,
                                       @RequestBody Building building) throws ThingsboardException {
 
-        Building savedBuilding = converter.assign(Building.class, assetController.saveAsset(building));
-
-        EntityRelation entityRelation = new EntityRelation();
-        entityRelation.setFrom(AssetId.fromString(strTerritoryId));
-        entityRelation.setType(RELATION_TYPE_CONTAINS);
-        entityRelation.setTo(AssetId.fromString(savedBuilding));
-
-        relationController.saveRelation(entityRelation);
-
-        return savedBuilding;
+        return save(building, strTerritoryId);
     }
 
     @ApiOperation(value = "Get Territory (getAssetById)",
@@ -137,7 +124,7 @@ public class TopologyController extends BaseController {
     public Building getBuildingById(@ApiParam(value = ASSET_ID_PARAM_DESCRIPTION)
                                           @PathVariable(TERRITORY_ID) String strTerritoryId,
                                     @PathVariable(BUILDING_ID) String strAssetId) throws ThingsboardException {
-        return new Building(assetController.getAssetById(strAssetId));
+        return getById(Building.class, strAssetId);
     }
 
     @ApiOperation(value = "Find related buildings (findByQuery)",
@@ -149,21 +136,33 @@ public class TopologyController extends BaseController {
     @ResponseBody
     public List<Building> findBuildingsByQuery(
             @PathVariable(TERRITORY_ID) String strTerritoryId) throws ThingsboardException {
+        return findAllItems(Building.class, Segments.BUILDING, strTerritoryId);
+    }
 
-
+    @SneakyThrows
+    protected <T extends AssetWrapper> List<T> findAllItems(Class<T> targetClass, Segments type, String parentId) throws ThingsboardException {
         RelationsSearchParameters relationParameters = new RelationsSearchParameters(
-                EntityIdFactory.getByTypeAndUuid(EntityType.ASSET, strTerritoryId),
+                EntityIdFactory.getByTypeAndUuid(EntityType.ASSET, parentId),
                 EntitySearchDirection.FROM,
                 1,
                 false
         );
 
         AssetSearchQuery searchQuery = new AssetSearchQuery();
-        searchQuery.setAssetTypes(List.of(Segments.BUILDING.getKey()));
+        searchQuery.setAssetTypes(List.of(type.getKey()));
         searchQuery.setRelationType(RELATION_TYPE_CONTAINS);
         searchQuery.setParameters(relationParameters);
 
-        return assetController.findByQuery(searchQuery).stream().map(a -> converter.assign(new Building(), a)).collect(Collectors.toList());
+        Constructor<T> constructor = targetClass.getConstructor();
+        return assetController.findByQuery(searchQuery).stream().map(
+                a -> {
+                    try {
+                        return converter.assign(constructor.newInstance(), a);
+                    } catch (Exception e) {
+                        throw new RuntimeException(e);
+                    }
+                })
+            .collect(Collectors.toList());
     }
 
     @ApiOperation(value = "Create Or Update Room (saveAsset)",
@@ -178,20 +177,8 @@ public class TopologyController extends BaseController {
                               @PathVariable(TERRITORY_ID) String strTerritoryId,
                               @PathVariable(BUILDING_ID) String strBuildingId,
                               @RequestBody Room room) throws ThingsboardException {
-//        checkAndSetType(room.getAsset(), Segments.ROOM);
-        //todo log data correctly according to the architecture
-        //todo verify that building belogs to territory
-
-        Room savedRoom = converter.assign(new Room(), assetController.saveAsset(converter.from(room)));
-
-        EntityRelation entityRelation = new EntityRelation();
-        entityRelation.setFrom(AssetId.fromString(strBuildingId));
-        entityRelation.setType(RELATION_TYPE_CONTAINS);
-        entityRelation.setTo(AssetId.fromString(savedRoom.getId()));
-
-        relationController.saveRelation(entityRelation);
-
-        return savedRoom;
+        //todo verify that territory has such building
+        return save(room, strBuildingId);
     }
 
     @ApiOperation(value = "Create Or Update Room (saveAsset)",
@@ -207,13 +194,8 @@ public class TopologyController extends BaseController {
                               @PathVariable(BUILDING_ID) String strBuildingId,
                               @PathVariable(ROOM_ID) String strRoomId,
                               @RequestBody DeviceAssigment assigment) throws ThingsboardException {
-        //todo log data correctly according to the architecture
-        Room room = new Room(assetController.getAssetById(strRoomId));
-
-        //todo verify that room belongs to territory
-
         EntityRelation entityRelation = new EntityRelation();
-        entityRelation.setFrom(room.getAsset().getId());
+        entityRelation.setFrom(AssetId.fromString(strRoomId));
         entityRelation.setType(RELATION_TYPE_CONTAINS);
         entityRelation.setTo(EntityIdFactory.getByTypeAndUuid(EntityType.DEVICE, assigment.getDeviceId()));
 
@@ -264,19 +246,7 @@ public class TopologyController extends BaseController {
             ) throws ThingsboardException {
 
 
-        RelationsSearchParameters relationParameters = new RelationsSearchParameters(
-                EntityIdFactory.getByTypeAndUuid(EntityType.ASSET, strTerritoryId),
-                EntitySearchDirection.FROM,
-                1,
-                false
-        );
-
-        AssetSearchQuery searchQuery = new AssetSearchQuery();
-        searchQuery.setAssetTypes(List.of(Segments.ROOM.getKey()));
-        searchQuery.setRelationType(RELATION_TYPE_CONTAINS);
-        searchQuery.setParameters(relationParameters);
-
-        return assetController.findByQuery(searchQuery).stream().map(Room::new).collect(Collectors.toList());
+        return findAllItems(Room.class, Segments.ROOM, strBuildingId);
     }
 
     @ApiOperation(value = "Get Territory (getAssetById)",
@@ -291,18 +261,31 @@ public class TopologyController extends BaseController {
                                     @PathVariable(TERRITORY_ID) String strTerritoryId,
                                     @PathVariable(BUILDING_ID) String strBuildingId,
                                     @PathVariable(ROOM_ID) String strRoomId) throws ThingsboardException {
-        return new Room(assetController.getAssetById(strRoomId));
+        return getById(Room.class, strRoomId);
     }
 
 
-    private void checkAndSetType(Asset asset, Segments segment) throws ThingsboardException {
-        var definedType = asset.getType();
-        if (Objects.nonNull(definedType) && !segment.getKey().equals(definedType)) {
-            throw new ThingsboardException(
-                    "Unexpected asset type " + definedType, ThingsboardErrorCode.INVALID_ARGUMENTS);
-        }
+    @SneakyThrows
+    protected <T extends AssetWrapper> T getById(Class<T> targetClass, String id) throws ThingsboardException {
+        Asset asset = assetController.getAssetById(id);
 
-        asset.setType(segment.getKey());
+        return converter.assign(targetClass.getConstructor().newInstance(), asset);
+    }
+
+    protected <T extends AssetWrapper> T save(T posted, String parentId) throws ThingsboardException {
+        Asset postedAsset = converter.from(posted);
+        Asset savedAsset = assetController.saveAsset(postedAsset);
+        Class<T> classRef = (Class<T>) posted.getClass(); //fix cast
+        T saved = converter.assign(classRef, savedAsset);
+
+        EntityRelation entityRelation = new EntityRelation();
+        entityRelation.setFrom(AssetId.fromString(parentId));
+        entityRelation.setType(RELATION_TYPE_CONTAINS);
+        entityRelation.setTo(AssetId.fromString(saved.getId()));
+
+        relationController.saveRelation(entityRelation);
+
+        return saved;
     }
 
 

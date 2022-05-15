@@ -16,12 +16,15 @@
 package org.thingsboard.server.common.data.topology.dto;
 
 import lombok.NoArgsConstructor;
+import lombok.experimental.SuperBuilder;
 import org.thingsboard.server.common.data.asset.Asset;
 
 @NoArgsConstructor
+@SuperBuilder
 public class Building extends AssetWrapper {
 
-    public Building(Asset asset) {
-        super(asset);
+    @Override
+    public String getType() {
+        return Segments.BUILDING.getKey();
     }
 }

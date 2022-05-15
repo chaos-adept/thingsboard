@@ -18,15 +18,13 @@ package org.thingsboard.server.common.data.topology.dto;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-
+import lombok.experimental.SuperBuilder;
 import org.apache.commons.lang3.StringUtils;
-import org.thingsboard.server.common.data.asset.Asset;
-
-import com.fasterxml.jackson.annotation.JsonIgnore;
 
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
+@SuperBuilder
 public abstract class AssetWrapper {
 
     private String id;

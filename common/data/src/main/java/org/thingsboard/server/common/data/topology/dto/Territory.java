@@ -17,18 +17,12 @@ package org.thingsboard.server.common.data.topology.dto;
 
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.thingsboard.server.common.data.asset.Asset;
+import lombok.experimental.SuperBuilder;
 
 @Data
 @NoArgsConstructor
+@SuperBuilder
 public class Territory extends AssetWrapper {
-    public Territory() {
-        super();
-    }
-
-    public static Territory from(Asset savedAsset) {
-        return new Territory(savedAsset);
-    }
 
     @Override
     public String getType() {

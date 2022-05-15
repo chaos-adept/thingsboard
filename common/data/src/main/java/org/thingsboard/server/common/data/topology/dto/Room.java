@@ -15,14 +15,17 @@
  */
 package org.thingsboard.server.common.data.topology.dto;
 
+import lombok.experimental.SuperBuilder;
 import org.thingsboard.server.common.data.asset.Asset;
 
 import lombok.NoArgsConstructor;
 
 @NoArgsConstructor
+@SuperBuilder
 public class Room extends AssetWrapper {
 
-    public Room(Asset asset) {
-        super(asset);
+    @Override
+    public String getType() {
+        return Segments.ROOM.getKey();
     }
 }
