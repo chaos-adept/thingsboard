@@ -181,7 +181,7 @@ public abstract class BaseTopologyControllerTest extends AbstractControllerTest 
         Assert.assertNotNull(savedAsset.getCustomerId());
         Assert.assertEquals(NULL_UUID, savedAsset.getCustomerId().getId());
         Assert.assertEquals(wrapper.getName(), savedAsset.getName());
-        Assert.assertNull(savedAsset.getType(), wrapper.getType());
+        Assert.assertEquals(savedAsset.getType(), wrapper.getType());
         Assert.assertEquals(savedAsset.getType(), expectedType);
     }
 

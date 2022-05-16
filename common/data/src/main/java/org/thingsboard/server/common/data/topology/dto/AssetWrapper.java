@@ -15,6 +15,9 @@
  */
 package org.thingsboard.server.common.data.topology.dto;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import io.swagger.annotations.ApiModel;
+import io.swagger.annotations.ApiModelProperty;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -25,14 +28,18 @@ import org.apache.commons.lang3.StringUtils;
 @AllArgsConstructor
 @NoArgsConstructor
 @SuperBuilder
+@ApiModel(description = "DTO for asset representation")
 public abstract class AssetWrapper {
 
+    @ApiModelProperty(position = 1, value = "Unique Id")
     private String id;
+    @ApiModelProperty(position = 2, value = "Name")
     private String name;
 
     public boolean hasId() {
-        return StringUtils.isEmpty(id);
+        return !StringUtils.isEmpty(id);
     }
 
+    @JsonIgnore
     public abstract String getType();
 }

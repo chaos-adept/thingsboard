@@ -40,7 +40,6 @@ import org.thingsboard.server.controller.converters.TopologyConverter;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 
 import java.lang.reflect.Constructor;
-import java.lang.reflect.InvocationTargetException;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -78,27 +77,27 @@ public class TopologyController extends BaseController {
     @ResponseBody
     public Territory getTerritoryById(
                               @ApiParam(value = TERRITORY_ID_PARAM_DESCRIPTION)
-                              @PathVariable(TERRITORY_ID) String strAssetId) throws ThingsboardException {
-        return getById(Territory.class, strAssetId);
+                              @PathVariable(TERRITORY_ID) String strTerritoryId) throws ThingsboardException {
+        return getById(Territory.class, strTerritoryId);
     }
 
 
-    @ApiOperation(value = "Create Or Update Territory (saveAsset)",
-            notes = "Creates or Updates the Asset. When creating asset, platform generates Asset Id as " + UUID_WIKI_LINK +
+    @ApiOperation(value = "Create Or Update Territory",
+            notes = "Creates or Updates the Territory. When creating it proxies request and creates asset, platform generates Asset Id as " + UUID_WIKI_LINK +
                     "The newly created Asset id will be present in the response. " +
                     "Specify existing Asset id to update the asset. " +
                     "Referencing non-existing Asset Id will cause 'Not Found' error." + TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH, produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/territory", method = RequestMethod.POST)
     @ResponseBody
-    public Territory saveAsset(
-            @ApiParam(value = "A JSON value representing the asset.") @RequestBody Territory territory) throws ThingsboardException {
+    public Territory saveTerritory(
+            @ApiParam(value = "A JSON value representing the territory.") @RequestBody Territory territory) throws ThingsboardException {
         Asset postedAsset = converter.from(territory);
         Asset savedAsset = assetController.saveAsset(postedAsset);
         return converter.assign(territory.getClass(), savedAsset);
     }
 
-    @ApiOperation(value = "Create Or Update Buldings (saveAsset)",
+    @ApiOperation(value = "Create Or Update Buildings",
             notes = "Creates or Updates the Asset. When creating building, platform generates Asset Id as " + UUID_WIKI_LINK +
                     "The newly created Asset id will be present in the response. " +
                     "Specify existing Asset id to update the building. " +
@@ -113,8 +112,8 @@ public class TopologyController extends BaseController {
         return save(building, strTerritoryId);
     }
 
-    @ApiOperation(value = "Get Territory (getAssetById)",
-            notes = "Fetch the Topology object based on the provided Asset Id. " +
+    @ApiOperation(value = "Get Territory",
+            notes = "Fetch the Territory object based on the provided Asset Id. " +
                     "If the user has the authority of 'Tenant Administrator', the server checks that the asset is owned by the same tenant. " +
                     "If the user has the authority of 'Customer User', the server checks that the asset is assigned to the same customer." + TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH
             , produces = MediaType.APPLICATION_JSON_VALUE)
@@ -127,7 +126,7 @@ public class TopologyController extends BaseController {
         return getById(Building.class, strAssetId);
     }
 
-    @ApiOperation(value = "Find related buildings (findByQuery)",
+    @ApiOperation(value = "Find related buildings",
             notes = "Returns all assets that are related to the specific entity. " +
                     "The entity id, relation type, asset types, depth of the search, and other query parameters defined using complex 'AssetSearchQuery' object. " +
                     "See 'Model' tab of the Parameters for more info.", produces = MediaType.APPLICATION_JSON_VALUE)
@@ -165,7 +164,7 @@ public class TopologyController extends BaseController {
             .collect(Collectors.toList());
     }
 
-    @ApiOperation(value = "Create Or Update Room (saveAsset)",
+    @ApiOperation(value = "Create Or Update Room",
             notes = "Creates or Updates the Asset. When creating room, platform generates Asset Id as " + UUID_WIKI_LINK +
                     "The newly created Asset id will be present in the response. " +
                     "Specify existing Asset id to update the room. " +
@@ -177,7 +176,6 @@ public class TopologyController extends BaseController {
                               @PathVariable(TERRITORY_ID) String strTerritoryId,
                               @PathVariable(BUILDING_ID) String strBuildingId,
                               @RequestBody Room room) throws ThingsboardException {
-        //todo verify that territory has such building
         return save(room, strBuildingId);
     }
 
@@ -233,7 +231,7 @@ public class TopologyController extends BaseController {
                 .collect(Collectors.toList());
     }
 
-    @ApiOperation(value = "Find related buildings (findByQuery)",
+    @ApiOperation(value = "Find related buildings",
             notes = "Returns all assets that are related to the specific entity. " +
                     "The entity id, relation type, asset types, depth of the search, and other query parameters defined using complex 'AssetSearchQuery' object. " +
                     "See 'Model' tab of the Parameters for more info.", produces = MediaType.APPLICATION_JSON_VALUE)
@@ -249,8 +247,8 @@ public class TopologyController extends BaseController {
         return findAllItems(Room.class, Segments.ROOM, strBuildingId);
     }
 
-    @ApiOperation(value = "Get Territory (getAssetById)",
-            notes = "Fetch the Topology object based on the provided Asset Id. " +
+    @ApiOperation(value = "Get Territory",
+            notes = "Fetch the Territory object based on the provided Asset Id. " +
                     "If the user has the authority of 'Tenant Administrator', the server checks that the asset is owned by the same tenant. " +
                     "If the user has the authority of 'Customer User', the server checks that the asset is assigned to the same customer." + TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH
             , produces = MediaType.APPLICATION_JSON_VALUE)

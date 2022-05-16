@@ -33,17 +33,16 @@ public class TopologyConverter {
         return assign(new Territory(), asset);
     }
 
-    public AssetId assertIdFrom(AssetWrapper wrapper) {
-        return AssetId.fromString(wrapper.getId());
-    }
-
     @SneakyThrows
     public <T extends AssetWrapper> Asset from(T wrapper) {
+        Asset asset;
+
         if (wrapper.hasId()) {
-            return assetController.getAssetById(wrapper.getId());
+            asset = assetController.getAssetById(wrapper.getId());
+        } else {
+            asset = new Asset();
         }
 
-        Asset asset = new Asset();
         asset.setName(wrapper.getName());
         asset.setType(wrapper.getType());
 
