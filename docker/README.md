@@ -122,3 +122,8 @@ and then you can publish it to subsequence deployments
 
 `docker push <hub-user>/<repo-name>:<tag>`
 `docker push chaosadept/thingsboard:latest`
+
+and then run 
+`docker run --env-file docker.env -it -p 8080:8080 chaosadept/thingsboard:latest`
+also you might need to specify root cert of the postgres if it is required
+`sudo docker run --env-file docker.env -it -p 8080:8080 --volume "/home/username/.postgresql/root.crt:/root/.postgresql/root.crt" chaosadept/thingsboard:latest`
