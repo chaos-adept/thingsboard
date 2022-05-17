@@ -13,19 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.thingsboard.server.common.data.topology.dto;
 
-import org.thingsboard.server.common.data.asset.Asset;
-
+import io.swagger.annotations.ApiModelProperty;
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.experimental.SuperBuilder;
 
-@NoArgsConstructor
-@AllArgsConstructor
 @Data
-@Builder
-public class DeviceAssigment {
-    private String deviceId;
+@AllArgsConstructor
+@NoArgsConstructor
+@SuperBuilder
+public class TopologyDevice extends BaseWrapper {
+    @ApiModelProperty(position = 1, notes = "it is just a type of device which can be any based on the client needs")
+    private String type;
 }

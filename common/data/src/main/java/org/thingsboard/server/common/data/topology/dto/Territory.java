@@ -22,10 +22,10 @@ import lombok.experimental.SuperBuilder;
 @Data
 @NoArgsConstructor
 @SuperBuilder
-public class Territory extends AssetWrapper {
+public class Territory extends BaseWrapper {
 
     @Override
     public String getType() {
-        return Segments.TERRITORY.getKey();
+        return TopologyLevel.TERRITORY.getKey();
     }
 }

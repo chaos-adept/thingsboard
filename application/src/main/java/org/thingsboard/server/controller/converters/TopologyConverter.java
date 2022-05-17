@@ -1,12 +1,12 @@
 /**
  * Copyright © 2016-2022 The Thingsboard Authors
- *
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,23 +18,28 @@ package org.thingsboard.server.controller.converters;
 import lombok.SneakyThrows;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.asset.Asset;
-import org.thingsboard.server.common.data.id.AssetId;
-import org.thingsboard.server.common.data.topology.dto.AssetWrapper;
+import org.thingsboard.server.common.data.topology.dto.BaseWrapper;
 import org.thingsboard.server.common.data.topology.dto.Territory;
+import org.thingsboard.server.common.data.topology.dto.TopologyDevice;
 import org.thingsboard.server.controller.AssetController;
+import org.thingsboard.server.controller.DeviceController;
 
 @Component
 public class TopologyConverter {
     @Autowired
     private AssetController assetController;
 
+    @Autowired
+    private DeviceController deviceController;
+
     public Territory from(Asset asset) {
         return assign(new Territory(), asset);
     }
 
     @SneakyThrows
-    public <T extends AssetWrapper> Asset from(T wrapper) {
+    public <T extends BaseWrapper> Asset from(T wrapper) {
         Asset asset;
 
         if (wrapper.hasId()) {
@@ -49,14 +54,40 @@ public class TopologyConverter {
         return asset;
     }
 
-    public <T extends AssetWrapper> T assign(T wrapper, Asset asset) {
+    public <T extends BaseWrapper> T assign(T wrapper, Asset asset) {
         wrapper.setId(asset.getId().getId().toString());
         wrapper.setName(asset.getName());
         return wrapper;
     }
 
     @SneakyThrows
-    public <T extends AssetWrapper> T assign(Class<T> wrapperClass, Asset asset) {
+    public <T extends BaseWrapper> T assign(Class<T> wrapperClass, Asset asset) {
         return assign(wrapperClass.getConstructor().newInstance(), asset);
+    }
+
+    @SneakyThrows
+    public TopologyDevice from(Device device) {
+        TopologyDevice wrapper = new TopologyDevice();
+
+        wrapper.setId(device.getId().getId().toString());
+        wrapper.setName(device.getName());
+
+        return wrapper;
+    }
+
+    @SneakyThrows
+    public Device from(TopologyDevice wrapper) {
+        Device device;
+
+        if (wrapper.hasId()) {
+            device = deviceController.getDeviceById(wrapper.getId());
+        } else {
+            device = new Device();
+        }
+
+        device.setName(wrapper.getName());
+        device.setType(wrapper.getType());
+
+        return device;
     }
 }

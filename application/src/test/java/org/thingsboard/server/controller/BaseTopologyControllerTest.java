@@ -22,17 +22,17 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
-import org.thingsboard.server.common.data.Device;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.asset.Asset;
+import org.thingsboard.server.common.data.id.AssetId;
+import org.thingsboard.server.common.data.id.DeviceId;
+import org.thingsboard.server.common.data.relation.EntityRelation;
+import org.thingsboard.server.common.data.relation.RelationTypeGroup;
 import org.thingsboard.server.common.data.security.Authority;
-import org.thingsboard.server.common.data.topology.dto.AssetWrapper;
-import org.thingsboard.server.common.data.topology.dto.Building;
-import org.thingsboard.server.common.data.topology.dto.DeviceAssigment;
-import org.thingsboard.server.common.data.topology.dto.Room;
-import org.thingsboard.server.common.data.topology.dto.Segments;
-import org.thingsboard.server.common.data.topology.dto.Territory;
+import org.thingsboard.server.common.data.topology.dto.*;
+import org.thingsboard.server.dao.relation.RelationService;
 
 import java.util.List;
 
@@ -43,6 +43,9 @@ public abstract class BaseTopologyControllerTest extends AbstractControllerTest 
 
     private Tenant savedTenant;
     private User tenantAdmin;
+
+    @Autowired
+    protected RelationService relationService;
 
     @Before
     public void beforeTest() throws Exception {
@@ -76,7 +79,7 @@ public abstract class BaseTopologyControllerTest extends AbstractControllerTest 
         Territory territory = Territory.builder().name("My territory").build();
         Territory savedTerritory = doPost("/api/topology/territory", territory, Territory.class);
 
-        verifyCreatedAsset(savedTerritory, Segments.TERRITORY.getKey());
+        verifyCreatedAsset(savedTerritory, TopologyLevel.TERRITORY.getKey());
 
         savedTerritory.setName("My new asset");
         doPost("/api/topology/territory", savedTerritory, Territory.class);
@@ -90,6 +93,12 @@ public abstract class BaseTopologyControllerTest extends AbstractControllerTest 
         String territoryId = createTerritory().getId();
 
         Building savedBuilding = createBuilding(territoryId);
+
+        Assert.assertTrue(relationService.checkRelation(
+                tenantId,
+                AssetId.fromString(territoryId),
+                AssetId.fromString(savedBuilding.getId()),
+                EntityRelation.CONTAINS_TYPE, RelationTypeGroup.COMMON).get());
 
         savedBuilding.setName("My new asset");
         doPost("/api/topology/territory/{territoryId}/building", savedBuilding, Building.class, territoryId);
@@ -106,13 +115,24 @@ public abstract class BaseTopologyControllerTest extends AbstractControllerTest 
 
         Room savedRoom = createRoom(territoryId, buildingId);
 
+        Assert.assertTrue(relationService.checkRelation(
+                tenantId,
+                AssetId.fromString(territoryId),
+                AssetId.fromString(buildingId),
+                EntityRelation.CONTAINS_TYPE, RelationTypeGroup.COMMON).get());
+        Assert.assertTrue(relationService.checkRelation(
+                tenantId,
+                AssetId.fromString(buildingId),
+                AssetId.fromString(savedRoom.getId()),
+                EntityRelation.CONTAINS_TYPE, RelationTypeGroup.COMMON).get());
+
         savedRoom.setName("My new asset");
         doPost("/api/topology/territory/{territoryId}/building/{buildingId}/room",
                 savedRoom, Room.class, territoryId, buildingId);
 
-        Room foundBuilding = doGet("/api/topology/territory/{territoryId}/building/{buildingId}/room/{id}", Room.class,
+        Room foundRoom = doGet("/api/topology/territory/{territoryId}/building/{buildingId}/room/{id}", Room.class,
                 territoryId, buildingId, savedRoom.getId());
-        Assert.assertEquals(foundBuilding.getName(), savedRoom.getName());
+        Assert.assertEquals(foundRoom.getName(), savedRoom.getName());
     }
 
     private Room createRoom(String territoryId, String buildingId) throws Exception {
@@ -149,30 +169,42 @@ public abstract class BaseTopologyControllerTest extends AbstractControllerTest 
         Building building = createBuilding(territory.getId());
         Room room = createRoom(territory.getId(), building.getId());
 
-        Device device = new Device();
+        Assert.assertTrue(relationService.checkRelation(
+                tenantId,
+                AssetId.fromString(territory.getId()),
+                AssetId.fromString(building.getId()),
+                EntityRelation.CONTAINS_TYPE, RelationTypeGroup.COMMON).get());
+        Assert.assertTrue(relationService.checkRelation(
+                tenantId,
+                AssetId.fromString(building.getId()),
+                AssetId.fromString(room.getId()),
+                EntityRelation.CONTAINS_TYPE, RelationTypeGroup.COMMON).get());
+
+        TopologyDevice device = new TopologyDevice();
         device.setName("My device");
         device.setType("default");
-        Device savedDevice = doPost("/api/device", device, Device.class);
-        String deviceId = savedDevice.getId().getId().toString();
 
-
-        DeviceAssigment deviceAssigment = DeviceAssigment.builder().deviceId(deviceId).build();
-        DeviceAssigment savedDeviceAssigment = doPost(
-                "/api/topology/territory/{territoryId}/building/{buildingId}/room/{roomId}/deviceAssigment",
-                deviceAssigment, DeviceAssigment.class,
+        TopologyDevice savedDevice = doPost(
+                "/api/topology/territory/{territoryId}/building/{buildingId}/room/{roomId}/device",
+                device, TopologyDevice.class,
                 territory.getId(), building.getId(), room.getId());
 
-        //todo get list of devices and verify that device is presented
-        var tr = new TypeReference<List<DeviceAssigment>>() {};
-        List<DeviceAssigment> deviceList = doGetTyped(
-                "/api/topology/territory/{territoryId}/building/{buildingId}/room/{roomId}/deviceAssignments",
+        Assert.assertTrue(relationService.checkRelation(
+                tenantId,
+                AssetId.fromString(room.getId()),
+                DeviceId.fromString(savedDevice.getId()),
+                EntityRelation.CONTAINS_TYPE, RelationTypeGroup.COMMON).get());
+
+        var tr = new TypeReference<List<TopologyDevice>>() {};
+        List<TopologyDevice> deviceList = doGetTyped(
+                "/api/topology/territory/{territoryId}/building/{buildingId}/room/{roomId}/devices",
                 tr,
                 territory.getId(), building.getId(), room.getId());
-        Assert.assertEquals(deviceList.get(0).getDeviceId(), savedDevice.getId().getId().toString());
+        Assert.assertEquals(deviceList.get(0).getId(), savedDevice.getId());
     }
 
     @SneakyThrows
-    private void verifyCreatedAsset(AssetWrapper wrapper, String expectedType) {
+    private void verifyCreatedAsset(BaseWrapper wrapper, String expectedType) {
         Asset savedAsset = doGet("/api/asset/" + wrapper.getId(), Asset.class);
         Assert.assertNotNull(savedAsset);
         Assert.assertNotNull(savedAsset.getId());

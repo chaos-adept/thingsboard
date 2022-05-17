@@ -17,7 +17,7 @@ package org.thingsboard.server.common.data.topology.dto;
 
 import lombok.Getter;
 
-public enum Segments {
+public enum TopologyLevel {
     TERRITORY("Territory"),
     BUILDING("Building"),
     ROOM("Room");
@@ -25,7 +25,7 @@ public enum Segments {
     @Getter
     private final String key;
 
-    Segments(String key) {
+    TopologyLevel(String key) {
         this.key = key;
     }
 }

@@ -29,7 +29,7 @@ import org.apache.commons.lang3.StringUtils;
 @NoArgsConstructor
 @SuperBuilder
 @ApiModel(description = "DTO for asset representation")
-public abstract class AssetWrapper {
+public abstract class BaseWrapper {
 
     @ApiModelProperty(position = 1, value = "Unique Id")
     private String id;
