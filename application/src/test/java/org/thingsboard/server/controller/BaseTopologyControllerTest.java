@@ -149,10 +149,17 @@ public abstract class BaseTopologyControllerTest extends AbstractControllerTest 
         Assert.assertEquals(loadedAssets.get(0).getId(), savedBuilding.getId());
     }
 
+    @SneakyThrows
     @Test
-    @Ignore
     public void testGetTerritories() {
-        Assert.fail("not implemented");
+        String territoryId = createTerritory().getId();
+        var tr = new TypeReference<List<Building>>() {};
+        List<Building> loadedAssets = doGetTyped("/api/topology/territories",
+                tr, territoryId);
+
+        Assert.assertEquals(loadedAssets.size(), 1);
+        Assert.assertEquals(loadedAssets.get(0).getId(), territoryId);
+
     }
 
 

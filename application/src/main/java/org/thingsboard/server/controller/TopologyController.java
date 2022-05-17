@@ -20,6 +20,7 @@ import io.swagger.annotations.ApiParam;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.NotImplementedException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -74,6 +75,14 @@ public class TopologyController extends BaseController {
     @Autowired
     private TopologyConverter converter;
 
+    @ApiOperation(value = "Get Territories",
+            notes = "Returns all territories in the tenant", produces = MediaType.APPLICATION_JSON_VALUE)
+    @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
+    @RequestMapping(value = "/territories", method = RequestMethod.GET)
+    @ResponseBody
+    public List<Building> findTerritoriesByQuery() throws ThingsboardException {
+        throw new NotImplementedException("Not implemented");
+    }
 
     @ApiOperation(value = "Get Territory",
             notes = "Fetch the Topology object based on the provided Id. " +
