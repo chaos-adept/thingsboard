@@ -20,11 +20,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.asset.Asset;
+import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.topology.dto.BaseWrapper;
 import org.thingsboard.server.common.data.topology.dto.Territory;
 import org.thingsboard.server.common.data.topology.dto.TopologyDevice;
 import org.thingsboard.server.controller.AssetController;
 import org.thingsboard.server.controller.DeviceController;
+
+import java.util.function.Function;
 
 @Component
 public class TopologyConverter {
@@ -89,5 +92,14 @@ public class TopologyConverter {
         device.setType(wrapper.getType());
 
         return device;
+    }
+
+    public <T extends BaseWrapper> PageData<T> toPage(Class<T> targetClass, PageData<Asset> assetPage) {
+        return assetPage.mapData(new Function<Asset, T>() {
+            @Override
+            public T apply(Asset asset) {
+                return assign(targetClass, asset);
+            }
+        });
     }
 }

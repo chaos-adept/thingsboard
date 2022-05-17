@@ -13,19 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.topology.dto;
+package org.thingsboard.server.common.data.topology;
 
-import lombok.Getter;
+import lombok.Data;
+import lombok.experimental.SuperBuilder;
+import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.page.PageLink;
 
-public enum TopologyLevel {
-    TERRITORY("Territory"),
-    BUILDING("Building"),
-    ROOM("Room");
+import javax.annotation.Nullable;
+import javax.validation.constraints.NotNull;
 
-    @Getter
-    private final String key;
+@Data
+@SuperBuilder
+public class ChildrenSearchQuery<T extends EntityId> {
 
-    TopologyLevel(String key) {
-        this.key = key;
-    }
+    @NotNull
+    String type;
+
+    @Nullable
+    T parent;
+
+    @NotNull
+    PageLink pageLink;
 }

@@ -20,16 +20,12 @@ import org.thingsboard.server.common.data.EntitySubtype;
 import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.asset.AssetInfo;
 import org.thingsboard.server.common.data.asset.AssetSearchQuery;
-import org.thingsboard.server.common.data.id.AssetId;
-import org.thingsboard.server.common.data.id.CustomerId;
-import org.thingsboard.server.common.data.id.EdgeId;
-import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.id.*;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
-import org.thingsboard.server.common.data.page.TimePageLink;
+import org.thingsboard.server.common.data.topology.ChildrenSearchQuery;
 
 import java.util.List;
-import java.util.Optional;
 
 public interface AssetService {
 
@@ -62,6 +58,8 @@ public interface AssetService {
     void deleteAssetsByTenantId(TenantId tenantId);
 
     PageData<Asset> findAssetsByTenantIdAndCustomerId(TenantId tenantId, CustomerId customerId, PageLink pageLink);
+
+    PageData<Asset> findAssetsByChildrenQuery(TenantId tenantId, CustomerId customerId, ChildrenSearchQuery query);
 
     PageData<AssetInfo> findAssetInfosByTenantIdAndCustomerId(TenantId tenantId, CustomerId customerId, PageLink pageLink);
 

@@ -19,6 +19,7 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.NotImplementedException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Component;
@@ -33,6 +34,7 @@ import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.page.TimePageLink;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.RelationTypeGroup;
+import org.thingsboard.server.common.data.topology.ChildrenSearchQuery;
 import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.asset.AssetDao;
 import org.thingsboard.server.dao.model.sql.AssetEntity;
@@ -47,6 +49,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 
+import static java.util.Objects.nonNull;
 import static org.thingsboard.server.dao.asset.BaseAssetService.TB_SERVICE_QUEUE;
 
 /**
@@ -106,6 +109,28 @@ public class JpaAssetDao extends JpaAbstractSearchTextDao<AssetEntity, Asset> im
                         customerId,
                         Objects.toString(pageLink.getTextSearch(), ""),
                         DaoUtil.toPageable(pageLink)));
+    }
+
+    @Override
+    public PageData<Asset> findAssetsByQuery(UUID tenantId, UUID customerId, ChildrenSearchQuery query) {
+        if (nonNull(query.getParent())) {
+            return DaoUtil.toPageData(assetRepository
+                    .findByTenantIdAndCustomerIdAndTypeAndParent(
+                            tenantId,
+                            customerId,
+                            query.getType(),
+                            query.getParent().getId(),
+                            Objects.toString(query.getPageLink().getTextSearch(), ""),
+                            DaoUtil.toPageable(query.getPageLink())));
+        } else {
+            return DaoUtil.toPageData(assetRepository
+                    .findByTenantIdAndCustomerIdAndType(
+                            tenantId,
+                            customerId,
+                            query.getType(),
+                            Objects.toString(query.getPageLink().getTextSearch(), ""),
+                            DaoUtil.toPageable(query.getPageLink())));
+        }
     }
 
     @Override

@@ -17,10 +17,10 @@ package org.thingsboard.server.controller;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import lombok.SneakyThrows;
+import org.jetbrains.annotations.NotNull;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.thingsboard.server.common.data.Tenant;
@@ -28,9 +28,12 @@ import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.DeviceId;
+import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.RelationTypeGroup;
 import org.thingsboard.server.common.data.security.Authority;
+import org.thingsboard.server.common.data.topology.TopologyLevel;
 import org.thingsboard.server.common.data.topology.dto.*;
 import org.thingsboard.server.dao.relation.RelationService;
 
@@ -141,27 +144,26 @@ public abstract class BaseTopologyControllerTest extends AbstractControllerTest 
 
         Building savedBuilding = createBuilding(territoryId);
 
-        var tr = new TypeReference<List<Building>>() {};
-        List<Building> loadedAssets = doGetTyped("/api/topology/territory/{territoryId}/buildings",
-                tr, territoryId);
+        var tr = new TypeReference<PageData<Building>>() {};
+        PageData<Building> loadedAssets = doGetTypedWithPageLink(
+                "/api/topology/territory/{territoryId}/buildings?",
+                tr, getDefaultPageLink(), territoryId);
 
-        Assert.assertEquals(loadedAssets.size(), 1);
-        Assert.assertEquals(loadedAssets.get(0).getId(), savedBuilding.getId());
+        Assert.assertEquals(loadedAssets.getTotalElements(), 1);
+        Assert.assertEquals(loadedAssets.getData().get(0).getId(), savedBuilding.getId());
     }
 
     @SneakyThrows
     @Test
     public void testGetTerritories() {
         String territoryId = createTerritory().getId();
-        var tr = new TypeReference<List<Building>>() {};
-        List<Building> loadedAssets = doGetTyped("/api/topology/territories",
-                tr, territoryId);
+        var tr = new TypeReference<PageData<Territory>>() {};
+        PageData<Territory> loadedAssets = doGetTypedWithPageLink(
+                "/api/topology/territories?", tr, getDefaultPageLink());
 
-        Assert.assertEquals(loadedAssets.size(), 1);
-        Assert.assertEquals(loadedAssets.get(0).getId(), territoryId);
-
+        Assert.assertEquals(loadedAssets.getTotalElements(), 1);
+        Assert.assertEquals(loadedAssets.getData().get(0).getId(), territoryId);
     }
-
 
     @Test
     public void testAddDevicesToRooms() throws Exception {
@@ -231,6 +233,11 @@ public abstract class BaseTopologyControllerTest extends AbstractControllerTest 
     private Territory createTerritory(String name) throws Exception {
         Territory territory = Territory.builder().name("My territory").build();
         return doPost("/api/topology/territory", territory, Territory.class);
+    }
+
+    @NotNull
+    private PageLink getDefaultPageLink() {
+        return new PageLink(10);
     }
 
 

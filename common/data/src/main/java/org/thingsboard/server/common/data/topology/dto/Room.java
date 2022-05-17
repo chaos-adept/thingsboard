@@ -18,6 +18,7 @@ package org.thingsboard.server.common.data.topology.dto;
 import lombok.experimental.SuperBuilder;
 
 import lombok.NoArgsConstructor;
+import org.thingsboard.server.common.data.topology.TopologyLevel;
 
 @NoArgsConstructor
 @SuperBuilder

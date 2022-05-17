@@ -23,6 +23,7 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.page.TimePageLink;
+import org.thingsboard.server.common.data.topology.ChildrenSearchQuery;
 import org.thingsboard.server.dao.Dao;
 import org.thingsboard.server.dao.TenantEntityDao;
 
@@ -109,6 +110,17 @@ public interface AssetDao extends Dao<Asset>, TenantEntityDao {
      * @return the list of asset objects
      */
     PageData<Asset> findAssetsByTenantIdAndCustomerId(UUID tenantId, UUID customerId, PageLink pageLink);
+
+    /**
+     * Find assets by tenantId, customerId and children query.
+     *
+     * @param tenantId the tenantId
+     * @param customerId the customerId
+     * @param query the query with parent information to filter children
+     * @return the list of asset objects
+     */
+    PageData<Asset> findAssetsByQuery(UUID tenantId, UUID customerId, ChildrenSearchQuery query);
+
 
     /**
      * Find asset infos by tenantId, customerId and page link.

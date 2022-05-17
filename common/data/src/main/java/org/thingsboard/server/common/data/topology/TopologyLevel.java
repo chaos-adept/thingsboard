@@ -13,18 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.topology.dto;
+package org.thingsboard.server.common.data.topology;
 
-import lombok.NoArgsConstructor;
-import lombok.experimental.SuperBuilder;
-import org.thingsboard.server.common.data.topology.TopologyLevel;
+import lombok.Getter;
 
-@NoArgsConstructor
-@SuperBuilder
-public class Building extends BaseWrapper {
+public enum TopologyLevel {
+    TERRITORY("Territory"),
+    BUILDING("Building"),
+    ROOM("Room");
 
-    @Override
-    public String getType() {
-        return TopologyLevel.BUILDING.getKey();
+    @Getter
+    private final String key;
+
+    TopologyLevel(String key) {
+        this.key = key;
     }
 }

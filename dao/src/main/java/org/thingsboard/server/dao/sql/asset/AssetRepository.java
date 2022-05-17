@@ -107,6 +107,20 @@ public interface AssetRepository extends PagingAndSortingRepository<AssetEntity,
                                                          @Param("textSearch") String textSearch,
                                                          Pageable pageable);
 
+    @Query("SELECT a FROM AssetEntity a, RelationEntity re " +
+            "WHERE " +
+            "re.toId = a.id " +
+            "AND a.tenantId = :tenantId " +
+            "AND re.fromId = :parentId " +
+            "AND a.customerId = :customerId AND a.type = :type " +
+            "AND LOWER(a.searchText) LIKE LOWER(CONCAT('%', :textSearch, '%'))")
+    Page<AssetEntity> findByTenantIdAndCustomerIdAndTypeAndParent(@Param("tenantId") UUID tenantId,
+                                                         @Param("customerId") UUID customerId,
+                                                         @Param("type") String type,
+                                                         @Param("parentId") UUID parentId,
+                                                         @Param("textSearch") String textSearch,
+                                                         Pageable pageable);
+
     @Query("SELECT new org.thingsboard.server.dao.model.sql.AssetInfoEntity(a, c.title, c.additionalInfo) " +
             "FROM AssetEntity a " +
             "LEFT JOIN CustomerEntity c on c.id = a.customerId " +

@@ -20,7 +20,6 @@ import io.swagger.annotations.ApiParam;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.NotImplementedException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -36,19 +35,25 @@ import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityIdFactory;
+import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.relation.*;
+import org.thingsboard.server.common.data.topology.ChildrenSearchQuery;
+import org.thingsboard.server.common.data.topology.TopologyLevel;
 import org.thingsboard.server.common.data.topology.dto.*;
 import org.thingsboard.server.controller.converters.TopologyConverter;
+import org.thingsboard.server.dao.asset.AssetService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.security.permission.Operation;
 
 import java.lang.reflect.Constructor;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
 import static java.lang.String.format;
+import static java.util.Objects.nonNull;
 import static org.thingsboard.server.controller.ControllerConstants.*;
 
 @RestController
@@ -75,13 +80,29 @@ public class TopologyController extends BaseController {
     @Autowired
     private TopologyConverter converter;
 
+    @Autowired
+    private AssetService assetService;
+
     @ApiOperation(value = "Get Territories",
             notes = "Returns all territories in the tenant", produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/territories", method = RequestMethod.GET)
     @ResponseBody
-    public List<Building> findTerritoriesByQuery() throws ThingsboardException {
-        throw new NotImplementedException("Not implemented");
+    public PageData<Territory> findTerritoriesByQuery(
+            @ApiParam(value = PAGE_SIZE_DESCRIPTION)
+            @RequestParam int pageSize,
+            @ApiParam(value = PAGE_NUMBER_DESCRIPTION)
+            @RequestParam int page,
+            @ApiParam(value = ASSET_TEXT_SEARCH_DESCRIPTION)
+            @RequestParam(required = false) String textSearch,
+            @ApiParam(value = SORT_PROPERTY_DESCRIPTION, allowableValues = ASSET_SORT_PROPERTY_ALLOWABLE_VALUES)
+            @RequestParam(required = false) String sortProperty,
+            @ApiParam(value = SORT_ORDER_DESCRIPTION, allowableValues = SORT_ORDER_ALLOWABLE_VALUES)
+            @RequestParam(required = false) String sortOrder
+    ) throws ThingsboardException {
+        return getPageData(
+                null, Territory.class, TopologyLevel.TERRITORY,
+                pageSize, page, textSearch, sortProperty, sortOrder);
     }
 
     @ApiOperation(value = "Get Territory",
@@ -170,14 +191,25 @@ public class TopologyController extends BaseController {
         return getById(Building.class, strBuildingId);
     }
 
-    @ApiOperation(value = "Get related buildings",
+    @ApiOperation(value = "Get related Buildings",
             notes = "Returns all assets that are related to the specific entity. ", produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/territory/{territoryId}/buildings", method = RequestMethod.GET)
     @ResponseBody
-    public List<Building> findBuildingsByQuery(
-            @PathVariable(TERRITORY_ID) String strTerritoryId) throws ThingsboardException {
-        return findAllItems(Building.class, TopologyLevel.BUILDING, strTerritoryId);
+    public PageData<Building> findBuildingsByQuery(
+            @PathVariable(TERRITORY_ID) String strTerritoryId,
+            @ApiParam(value = PAGE_SIZE_DESCRIPTION)
+            @RequestParam int pageSize,
+            @ApiParam(value = PAGE_NUMBER_DESCRIPTION)
+            @RequestParam int page,
+            @ApiParam(value = ASSET_TEXT_SEARCH_DESCRIPTION)
+            @RequestParam(required = false) String textSearch,
+            @ApiParam(value = SORT_PROPERTY_DESCRIPTION, allowableValues = ASSET_SORT_PROPERTY_ALLOWABLE_VALUES)
+            @RequestParam(required = false) String sortProperty,
+            @ApiParam(value = SORT_ORDER_DESCRIPTION, allowableValues = SORT_ORDER_ALLOWABLE_VALUES)
+            @RequestParam(required = false) String sortOrder
+            ) throws ThingsboardException {
+        return getPageData(strTerritoryId, Building.class, TopologyLevel.BUILDING, pageSize, page, textSearch, sortProperty, sortOrder);
     }
 
     @ApiOperation(value = "Create Or Update Room",
@@ -247,16 +279,29 @@ public class TopologyController extends BaseController {
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/territory/{territoryId}/building/{buildingId}/rooms", method = RequestMethod.GET)
     @ResponseBody
-    public List<Room> findRoomsByQuery(
+    public PageData<Room> findRoomsByQuery(
             @PathVariable(TERRITORY_ID) String strTerritoryId,
-            @PathVariable(BUILDING_ID) String strBuildingId
+            @PathVariable(BUILDING_ID) String strBuildingId,
+            @ApiParam(value = PAGE_SIZE_DESCRIPTION)
+            @RequestParam int pageSize,
+            @ApiParam(value = PAGE_NUMBER_DESCRIPTION)
+            @RequestParam int page,
+            @ApiParam(value = ASSET_TEXT_SEARCH_DESCRIPTION)
+            @RequestParam(required = false) String textSearch,
+            @ApiParam(value = SORT_PROPERTY_DESCRIPTION, allowableValues = ASSET_SORT_PROPERTY_ALLOWABLE_VALUES)
+            @RequestParam(required = false) String sortProperty,
+            @ApiParam(value = SORT_ORDER_DESCRIPTION, allowableValues = SORT_ORDER_ALLOWABLE_VALUES)
+            @RequestParam(required = false) String sortOrder
             ) throws ThingsboardException {
+
         checkRelations(List.of(
                 assetId(strTerritoryId),
                 assetId(strBuildingId)
         ));
 
-        return findAllItems(Room.class, TopologyLevel.ROOM, strBuildingId);
+        return getPageData(
+                strBuildingId, Room.class, TopologyLevel.ROOM,
+                pageSize, page, textSearch, sortProperty, sortOrder);
     }
 
     @ApiOperation(value = "Delete Device",
@@ -277,28 +322,6 @@ public class TopologyController extends BaseController {
                 deviceId(strDeviceId)));
 
         deleteGeneric(strDeviceId);
-    }
-
-    private void checkRelations(List<EntityId> levels) throws ThingsboardException {
-        Iterator<EntityId> iterator = levels.iterator();
-        EntityId fromId = iterator.next();
-        while (iterator.hasNext()) {
-            EntityId toId = iterator.next();
-            try {
-                checkEntityId(fromId, Operation.READ);
-                checkEntityId(toId, Operation.READ);
-                RelationTypeGroup typeGroup = RelationTypeGroup.COMMON;
-                boolean exists = relationService.checkRelation(getTenantId(), fromId, toId, RELATION_TYPE_CONTAINS, typeGroup).get();
-                if (!exists) {
-                    throw new ThingsboardException(
-                            format("There is no relation between %s and %s", fromId, toId),
-                            ThingsboardErrorCode.ITEM_NOT_FOUND);
-                }
-                fromId = toId;
-            } catch (ExecutionException|InterruptedException e) {
-                throw new ThingsboardException(e.getMessage(), ThingsboardErrorCode.GENERAL);
-            }
-        }
     }
 
     @ApiOperation(value = "Create Or Update Device",
@@ -442,12 +465,51 @@ public class TopologyController extends BaseController {
                 .collect(Collectors.toList());
     }
 
+    private void checkRelations(List<EntityId> levels) throws ThingsboardException {
+        Iterator<EntityId> iterator = levels.iterator();
+        EntityId fromId = iterator.next();
+        while (iterator.hasNext()) {
+            EntityId toId = iterator.next();
+            try {
+                checkEntityId(fromId, Operation.READ);
+                checkEntityId(toId, Operation.READ);
+                RelationTypeGroup typeGroup = RelationTypeGroup.COMMON;
+                boolean exists = relationService.checkRelation(getTenantId(), fromId, toId, RELATION_TYPE_CONTAINS, typeGroup).get();
+                if (!exists) {
+                    throw new ThingsboardException(
+                            format("There is no relation between %s and %s", fromId, toId),
+                            ThingsboardErrorCode.ITEM_NOT_FOUND);
+                }
+                fromId = toId;
+            } catch (ExecutionException|InterruptedException e) {
+                throw new ThingsboardException(e.getMessage(), ThingsboardErrorCode.GENERAL);
+            }
+        }
+    }
+
     private EntityId assetId(String id) {
         return AssetId.fromString(id);
     }
 
     private EntityId deviceId(String id) {
         return DeviceId.fromString(id);
+    }
+
+    private <T extends BaseWrapper> PageData<T> getPageData(String parentId, Class<T> targetClass, TopologyLevel type, int pageSize, int page, String textSearch, String sortProperty, String sortOrder) throws ThingsboardException {
+        var tenantId = getCurrentUser().getTenantId();
+        var customerId = getCurrentUser().getCustomerId();
+        var parent = nonNull(parentId) ? AssetId.fromString(parentId) : null;
+
+        var query = ChildrenSearchQuery.builder()
+                .type(type.getKey())
+                .parent(parent)
+                .pageLink(createPageLink(pageSize, page, textSearch, sortProperty, sortOrder))
+                .build();
+
+        checkTenantId(tenantId, Operation.READ);
+
+        PageData<Asset> assetPage = assetService.findAssetsByChildrenQuery(tenantId, customerId, query);
+        return converter.toPage(targetClass, assetPage);
     }
 
 }
