@@ -35,6 +35,7 @@ import org.thingsboard.server.common.data.topology.dto.*;
 import org.thingsboard.server.dao.relation.RelationService;
 
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.thingsboard.server.dao.model.ModelConstants.NULL_UUID;
@@ -105,6 +106,7 @@ public abstract class BaseTopologyControllerTest extends AbstractControllerTest 
 
         Building foundBuilding = doGet("/api/topology/territory/{territoryId}/building/{id}", Building.class,
                 territoryId, savedBuilding.getId());
+        assertRelation(territoryId, savedBuilding.getId());
         Assert.assertEquals(foundBuilding.getName(), savedBuilding.getName());
     }
 
@@ -115,23 +117,14 @@ public abstract class BaseTopologyControllerTest extends AbstractControllerTest 
 
         Room savedRoom = createRoom(territoryId, buildingId);
 
-        Assert.assertTrue(relationService.checkRelation(
-                tenantId,
-                AssetId.fromString(territoryId),
-                AssetId.fromString(buildingId),
-                EntityRelation.CONTAINS_TYPE, RelationTypeGroup.COMMON).get());
-        Assert.assertTrue(relationService.checkRelation(
-                tenantId,
-                AssetId.fromString(buildingId),
-                AssetId.fromString(savedRoom.getId()),
-                EntityRelation.CONTAINS_TYPE, RelationTypeGroup.COMMON).get());
-
         savedRoom.setName("My new asset");
         doPost("/api/topology/territory/{territoryId}/building/{buildingId}/room",
                 savedRoom, Room.class, territoryId, buildingId);
 
         Room foundRoom = doGet("/api/topology/territory/{territoryId}/building/{buildingId}/room/{id}", Room.class,
                 territoryId, buildingId, savedRoom.getId());
+
+        assertRelation(buildingId, savedRoom.getId());
         Assert.assertEquals(foundRoom.getName(), savedRoom.getName());
     }
 
@@ -169,16 +162,8 @@ public abstract class BaseTopologyControllerTest extends AbstractControllerTest 
         Building building = createBuilding(territory.getId());
         Room room = createRoom(territory.getId(), building.getId());
 
-        Assert.assertTrue(relationService.checkRelation(
-                tenantId,
-                AssetId.fromString(territory.getId()),
-                AssetId.fromString(building.getId()),
-                EntityRelation.CONTAINS_TYPE, RelationTypeGroup.COMMON).get());
-        Assert.assertTrue(relationService.checkRelation(
-                tenantId,
-                AssetId.fromString(building.getId()),
-                AssetId.fromString(room.getId()),
-                EntityRelation.CONTAINS_TYPE, RelationTypeGroup.COMMON).get());
+        assertRelation(territory.getId(), building.getId());
+        assertRelation(building.getId(), room.getId());
 
         TopologyDevice device = new TopologyDevice();
         device.setName("My device");
@@ -201,6 +186,14 @@ public abstract class BaseTopologyControllerTest extends AbstractControllerTest 
                 tr,
                 territory.getId(), building.getId(), room.getId());
         Assert.assertEquals(deviceList.get(0).getId(), savedDevice.getId());
+    }
+
+    private void assertRelation(String from, String to) throws InterruptedException, ExecutionException {
+        Assert.assertTrue(relationService.checkRelation(
+                tenantId,
+                AssetId.fromString(from),
+                AssetId.fromString(to),
+                EntityRelation.CONTAINS_TYPE, RelationTypeGroup.COMMON).get());
     }
 
     @SneakyThrows
