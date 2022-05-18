@@ -79,7 +79,10 @@ public class TopologyController extends BaseController {
     private AssetService assetService;
 
     @ApiOperation(value = "Get Territories",
-            notes = "Returns all territories in the tenant", produces = MediaType.APPLICATION_JSON_VALUE)
+            notes = "Returns all territories in the tenant " +
+                    "If the user has the authority of 'Tenant Administrator', the server checks that the asset is owned by the same tenant. " +
+                    "If the user has the authority of 'Customer User', the server checks that the asset is assigned to the same customer." + TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH,
+            produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/territories", method = RequestMethod.GET)
     @ResponseBody
@@ -130,7 +133,7 @@ public class TopologyController extends BaseController {
     }
 
     @ApiOperation(value = "Delete Territory",
-            notes = "Deletes the Territory and all the relations (from and to the asset). Referencing non-existing asset Id will cause an error." + TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH)
+            notes = "Deletes the Territory and all the relations (from and to the asset). Referencing non-existing asset Id will cause an error." + TENANT_ADMIN_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
     @RequestMapping(value = "/territory/{territoryId}", method = RequestMethod.DELETE)
     @ResponseStatus(value = HttpStatus.OK)
@@ -462,10 +465,11 @@ public class TopologyController extends BaseController {
     private void checkRelations(List<EntityId> levels) throws ThingsboardException {
         Iterator<EntityId> iterator = levels.iterator();
         EntityId fromId = iterator.next();
+        checkEntityId(fromId, Operation.READ);
+
         while (iterator.hasNext()) {
             EntityId toId = iterator.next();
             try {
-                checkEntityId(fromId, Operation.READ);
                 checkEntityId(toId, Operation.READ);
                 RelationTypeGroup typeGroup = RelationTypeGroup.COMMON;
                 boolean exists = relationService.checkRelation(getTenantId(), fromId, toId, RELATION_TYPE_CONTAINS, typeGroup).get();
@@ -493,7 +497,6 @@ public class TopologyController extends BaseController {
         var tenantId = getCurrentUser().getTenantId();
         checkTenantId(tenantId, Operation.READ);
 
-        var customerId = getCurrentUser().getCustomerId();
         var parent = nonNull(parentId) ? AssetId.fromString(parentId) : null;
 
         var query = NarrowAssetSearchQuery.builder()
@@ -504,7 +507,12 @@ public class TopologyController extends BaseController {
 
         checkTenantId(tenantId, Operation.READ);
 
-        PageData<Asset> assetPage = assetService.findAssetsByChildrenQuery(tenantId, customerId, query);
+        PageData<Asset> assetPage = assetService.findAssetsByQuery(tenantId, query);
+
+        for (var asset : assetPage.getData()) {
+            this.checkAssetId(asset.getId(), Operation.READ);
+        }
+
         return converter.toPage(targetClass, assetPage);
     }
 

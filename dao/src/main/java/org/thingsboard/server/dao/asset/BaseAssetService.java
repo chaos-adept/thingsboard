@@ -225,10 +225,9 @@ public class BaseAssetService extends AbstractEntityService implements AssetServ
         return assetDao.findAssetsByTenantIdAndCustomerId(tenantId.getId(), customerId.getId(), pageLink);
     }
 
-    public PageData<Asset> findAssetsByChildrenQuery(TenantId tenantId, CustomerId customerId, NarrowAssetSearchQuery query) {
-        log.trace("Executing findAssetsByTenantIdAndCustomerId, tenantId [{}], customerId [{}], entityId [{}], pageLink [{}]", tenantId, customerId, query.getParent(), query.getPageLink());
+    public PageData<Asset> findAssetsByQuery(TenantId tenantId, NarrowAssetSearchQuery query) {
+        log.trace("Executing findAssetsByTenantIdAndCustomerId, tenantId [{}], entityId [{}], pageLink [{}]", tenantId, query.getParent(), query.getPageLink());
         validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
-        validateId(customerId, INCORRECT_CUSTOMER_ID + customerId);
 
         if (nonNull(query.getParent())) {
             validateId(query.getParent().getId(), INCORRECT_ASSET_ID + query.getParent().getId());
@@ -236,7 +235,7 @@ public class BaseAssetService extends AbstractEntityService implements AssetServ
 
         validatePageLink(query.getPageLink());
 
-        return assetDao.findAssetsByQuery(tenantId.getId(), customerId.getId(), query);
+        return assetDao.findAssetsByQuery(tenantId.getId(), query);
     }
 
     @Override

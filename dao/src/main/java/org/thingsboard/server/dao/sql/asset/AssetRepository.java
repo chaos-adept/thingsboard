@@ -22,7 +22,6 @@ import org.springframework.data.repository.PagingAndSortingRepository;
 import org.springframework.data.repository.query.Param;
 import org.thingsboard.server.dao.model.sql.AssetEntity;
 import org.thingsboard.server.dao.model.sql.AssetInfoEntity;
-import org.thingsboard.server.dao.model.sql.RuleChainEntity;
 
 import java.util.List;
 import java.util.UUID;
@@ -112,14 +111,13 @@ public interface AssetRepository extends PagingAndSortingRepository<AssetEntity,
             "re.toId = a.id " +
             "AND a.tenantId = :tenantId " +
             "AND re.fromId = :parentId " +
-            "AND a.customerId = :customerId AND a.type = :type " +
+            "AND a.type = :type " +
             "AND LOWER(a.searchText) LIKE LOWER(CONCAT('%', :textSearch, '%'))")
-    Page<AssetEntity> findByTenantIdAndCustomerIdAndTypeAndParent(@Param("tenantId") UUID tenantId,
-                                                         @Param("customerId") UUID customerId,
-                                                         @Param("type") String type,
-                                                         @Param("parentId") UUID parentId,
-                                                         @Param("textSearch") String textSearch,
-                                                         Pageable pageable);
+    Page<AssetEntity> findByTenantIdAndTypeAndParent(@Param("tenantId") UUID tenantId,
+                                                     @Param("type") String type,
+                                                     @Param("parentId") UUID parentId,
+                                                     @Param("textSearch") String textSearch,
+                                                     Pageable pageable);
 
     @Query("SELECT new org.thingsboard.server.dao.model.sql.AssetInfoEntity(a, c.title, c.additionalInfo) " +
             "FROM AssetEntity a " +

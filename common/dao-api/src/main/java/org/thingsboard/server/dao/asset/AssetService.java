@@ -59,7 +59,7 @@ public interface AssetService {
 
     PageData<Asset> findAssetsByTenantIdAndCustomerId(TenantId tenantId, CustomerId customerId, PageLink pageLink);
 
-    PageData<Asset> findAssetsByChildrenQuery(TenantId tenantId, CustomerId customerId, NarrowAssetSearchQuery query);
+    PageData<Asset> findAssetsByQuery(TenantId tenantId, NarrowAssetSearchQuery query);
 
     PageData<AssetInfo> findAssetInfosByTenantIdAndCustomerId(TenantId tenantId, CustomerId customerId, PageLink pageLink);
 

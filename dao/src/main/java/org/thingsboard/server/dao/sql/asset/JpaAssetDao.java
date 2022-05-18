@@ -104,21 +104,19 @@ public class JpaAssetDao extends JpaAbstractSearchTextDao<AssetEntity, Asset> im
     }
 
     @Override
-    public PageData<Asset> findAssetsByQuery(UUID tenantId, UUID customerId, NarrowAssetSearchQuery query) {
+    public PageData<Asset> findAssetsByQuery(UUID tenantId, NarrowAssetSearchQuery query) {
         if (nonNull(query.getParent())) {
             return DaoUtil.toPageData(assetRepository
-                    .findByTenantIdAndCustomerIdAndTypeAndParent(
+                    .findByTenantIdAndTypeAndParent(
                             tenantId,
-                            customerId,
                             query.getType(),
                             query.getParent().getId(),
                             Objects.toString(query.getPageLink().getTextSearch(), ""),
                             DaoUtil.toPageable(query.getPageLink())));
         } else {
             return DaoUtil.toPageData(assetRepository
-                    .findByTenantIdAndCustomerIdAndType(
+                    .findByTenantIdAndType(
                             tenantId,
-                            customerId,
                             query.getType(),
                             Objects.toString(query.getPageLink().getTextSearch(), ""),
                             DaoUtil.toPageable(query.getPageLink())));
