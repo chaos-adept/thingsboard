@@ -96,7 +96,7 @@ public class ControllerConstants {
     protected static final String TENANT_INFO_SORT_PROPERTY_ALLOWABLE_VALUES = "createdTime, tenantProfileName, title, email, country, state, city, address, address2, zip, phone, email";
     protected static final String DEVICE_PROFILE_SORT_PROPERTY_ALLOWABLE_VALUES = "createdTime, name, type, transportType, description, isDefault";
     protected static final String ASSET_SORT_PROPERTY_ALLOWABLE_VALUES = "createdTime, name, type, label, customerTitle";
-    protected static final String TOPOLOGY_SORT_PROPERTY_ALLOWABLE_VALUES = "name";
+    protected static final String TOPOLOGY_SORT_PROPERTY_ALLOWABLE_VALUES = "id, name";
     protected static final String ALARM_SORT_PROPERTY_ALLOWABLE_VALUES = "createdTime, startTs, endTs, type, ackTs, clearTs, severity, status";
     protected static final String EVENT_SORT_PROPERTY_ALLOWABLE_VALUES = "createdTime, id";
     protected static final String EDGE_SORT_PROPERTY_ALLOWABLE_VALUES = "createdTime, name, type, label, customerTitle";
