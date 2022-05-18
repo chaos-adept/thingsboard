@@ -42,7 +42,7 @@ import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.EntitySearchDirection;
 import org.thingsboard.server.common.data.relation.RelationTypeGroup;
-import org.thingsboard.server.common.data.topology.ChildrenSearchQuery;
+import org.thingsboard.server.common.data.topology.NarrowAssetSearchQuery;
 import org.thingsboard.server.dao.cache.EntitiesCacheManager;
 import org.thingsboard.server.dao.entity.AbstractEntityService;
 import org.thingsboard.server.dao.exception.DataValidationException;
@@ -225,7 +225,7 @@ public class BaseAssetService extends AbstractEntityService implements AssetServ
         return assetDao.findAssetsByTenantIdAndCustomerId(tenantId.getId(), customerId.getId(), pageLink);
     }
 
-    public PageData<Asset> findAssetsByChildrenQuery(TenantId tenantId, CustomerId customerId, ChildrenSearchQuery query) {
+    public PageData<Asset> findAssetsByChildrenQuery(TenantId tenantId, CustomerId customerId, NarrowAssetSearchQuery query) {
         log.trace("Executing findAssetsByTenantIdAndCustomerId, tenantId [{}], customerId [{}], entityId [{}], pageLink [{}]", tenantId, customerId, query.getParent(), query.getPageLink());
         validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
         validateId(customerId, INCORRECT_CUSTOMER_ID + customerId);

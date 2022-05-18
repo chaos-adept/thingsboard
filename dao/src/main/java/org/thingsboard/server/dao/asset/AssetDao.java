@@ -22,8 +22,7 @@ import org.thingsboard.server.common.data.asset.AssetInfo;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
-import org.thingsboard.server.common.data.page.TimePageLink;
-import org.thingsboard.server.common.data.topology.ChildrenSearchQuery;
+import org.thingsboard.server.common.data.topology.NarrowAssetSearchQuery;
 import org.thingsboard.server.dao.Dao;
 import org.thingsboard.server.dao.TenantEntityDao;
 
@@ -119,7 +118,7 @@ public interface AssetDao extends Dao<Asset>, TenantEntityDao {
      * @param query the query with parent information to filter children
      * @return the list of asset objects
      */
-    PageData<Asset> findAssetsByQuery(UUID tenantId, UUID customerId, ChildrenSearchQuery query);
+    PageData<Asset> findAssetsByQuery(UUID tenantId, UUID customerId, NarrowAssetSearchQuery query);
 
 
     /**

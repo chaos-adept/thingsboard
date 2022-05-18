@@ -102,4 +102,13 @@ public class TopologyConverter {
             }
         });
     }
+
+    public PageData<TopologyDevice> toPage(PageData<Device> assetPage) {
+        return assetPage.mapData(new Function<Device, TopologyDevice>() {
+            @Override
+            public TopologyDevice apply(Device device) {
+                return from(device);
+            }
+        });
+    }
 }

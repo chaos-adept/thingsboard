@@ -23,7 +23,7 @@ import org.thingsboard.server.common.data.asset.AssetSearchQuery;
 import org.thingsboard.server.common.data.id.*;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
-import org.thingsboard.server.common.data.topology.ChildrenSearchQuery;
+import org.thingsboard.server.common.data.topology.NarrowAssetSearchQuery;
 
 import java.util.List;
 
@@ -59,7 +59,7 @@ public interface AssetService {
 
     PageData<Asset> findAssetsByTenantIdAndCustomerId(TenantId tenantId, CustomerId customerId, PageLink pageLink);
 
-    PageData<Asset> findAssetsByChildrenQuery(TenantId tenantId, CustomerId customerId, ChildrenSearchQuery query);
+    PageData<Asset> findAssetsByChildrenQuery(TenantId tenantId, CustomerId customerId, NarrowAssetSearchQuery query);
 
     PageData<AssetInfo> findAssetInfosByTenantIdAndCustomerId(TenantId tenantId, CustomerId customerId, PageLink pageLink);
 

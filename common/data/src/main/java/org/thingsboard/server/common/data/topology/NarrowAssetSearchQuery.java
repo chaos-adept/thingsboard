@@ -25,14 +25,14 @@ import javax.validation.constraints.NotNull;
 
 @Data
 @SuperBuilder
-public class ChildrenSearchQuery<T extends EntityId> {
+public class NarrowAssetSearchQuery {
 
     @NotNull
-    String type;
+    private final String type;
 
     @Nullable
-    T parent;
+    EntityId parent;
 
     @NotNull
-    PageLink pageLink;
+    private final PageLink pageLink;
 }

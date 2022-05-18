@@ -28,16 +28,14 @@ import org.springframework.web.bind.annotation.*;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.asset.Asset;
-import org.thingsboard.server.common.data.asset.AssetSearchQuery;
 import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
-import org.thingsboard.server.common.data.id.AssetId;
-import org.thingsboard.server.common.data.id.DeviceId;
-import org.thingsboard.server.common.data.id.EntityId;
-import org.thingsboard.server.common.data.id.EntityIdFactory;
+import org.thingsboard.server.common.data.id.*;
 import org.thingsboard.server.common.data.page.PageData;
-import org.thingsboard.server.common.data.relation.*;
-import org.thingsboard.server.common.data.topology.ChildrenSearchQuery;
+import org.thingsboard.server.common.data.relation.EntityRelation;
+import org.thingsboard.server.common.data.relation.RelationTypeGroup;
+import org.thingsboard.server.common.data.topology.NarrowAssetSearchQuery;
+import org.thingsboard.server.common.data.topology.NarrowDeviceSearchQuery;
 import org.thingsboard.server.common.data.topology.TopologyLevel;
 import org.thingsboard.server.common.data.topology.dto.*;
 import org.thingsboard.server.controller.converters.TopologyConverter;
@@ -45,12 +43,9 @@ import org.thingsboard.server.dao.asset.AssetService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.security.permission.Operation;
 
-import java.lang.reflect.Constructor;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Optional;
 import java.util.concurrent.ExecutionException;
-import java.util.stream.Collectors;
 
 import static java.lang.String.format;
 import static java.util.Objects.nonNull;
@@ -139,7 +134,8 @@ public class TopologyController extends BaseController {
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
     @RequestMapping(value = "/territory/{territoryId}", method = RequestMethod.DELETE)
     @ResponseStatus(value = HttpStatus.OK)
-    public void deleteTerritory(@ApiParam(value = ASSET_ID_PARAM_DESCRIPTION) @PathVariable(TERRITORY_ID) String strTerritoryId) throws ThingsboardException {
+    public void deleteTerritory(
+            @ApiParam(value = TERRITORY_ID_PARAM_DESCRIPTION) @PathVariable(TERRITORY_ID) String strTerritoryId) throws ThingsboardException {
         deleteGeneric(strTerritoryId);
     }
 
@@ -152,7 +148,7 @@ public class TopologyController extends BaseController {
     @RequestMapping(value = "/territory/{territoryId}/building", method = RequestMethod.POST)
     @ResponseBody
     public Building saveBuildingAsset(
-            @PathVariable(TERRITORY_ID) String strTerritoryId,
+            @ApiParam(value = TERRITORY_ID_PARAM_DESCRIPTION) @PathVariable(TERRITORY_ID) String strTerritoryId,
             @ApiParam(value = "A JSON value representing the building.") @RequestBody Building building) throws ThingsboardException {
         return save(building, strTerritoryId);
     }
@@ -163,8 +159,8 @@ public class TopologyController extends BaseController {
     @RequestMapping(value = "/territory/{territoryId}/building/{buildingId}", method = RequestMethod.DELETE)
     @ResponseStatus(value = HttpStatus.OK)
     public void deleteBuilding(
-            @PathVariable(TERRITORY_ID) String strTerritoryId,
-            @PathVariable(BUILDING_ID) String strBuildingId) throws ThingsboardException {
+            @ApiParam(value = TERRITORY_ID_PARAM_DESCRIPTION) @PathVariable(TERRITORY_ID) String strTerritoryId,
+            @ApiParam(value = BUILDING_ID_PARAM_DESCRIPTION) @PathVariable(BUILDING_ID) String strBuildingId) throws ThingsboardException {
         checkRelations(List.of(
                 assetId(strTerritoryId),
                 assetId(strBuildingId)
@@ -182,7 +178,10 @@ public class TopologyController extends BaseController {
     @RequestMapping(value = "/territory/{territoryId}/building/{buildingId}", method = RequestMethod.GET)
     @ResponseBody
     public Building getBuildingById(
+            @ApiParam(value = TERRITORY_ID_PARAM_DESCRIPTION)
             @PathVariable(TERRITORY_ID) String strTerritoryId,
+
+            @ApiParam(value = BUILDING_ID_PARAM_DESCRIPTION)
             @PathVariable(BUILDING_ID) String strBuildingId) throws ThingsboardException {
         checkRelations(List.of(
                 assetId(strTerritoryId),
@@ -197,6 +196,7 @@ public class TopologyController extends BaseController {
     @RequestMapping(value = "/territory/{territoryId}/buildings", method = RequestMethod.GET)
     @ResponseBody
     public PageData<Building> findBuildingsByQuery(
+            @ApiParam(value = TERRITORY_ID_PARAM_DESCRIPTION)
             @PathVariable(TERRITORY_ID) String strTerritoryId,
             @ApiParam(value = PAGE_SIZE_DESCRIPTION)
             @RequestParam int pageSize,
@@ -221,9 +221,11 @@ public class TopologyController extends BaseController {
     @RequestMapping(value = "/territory/{territoryId}/building/{buildingId}/room", method = RequestMethod.POST)
     @ResponseBody
     public Room saveRoom(
-                              @PathVariable(TERRITORY_ID) String strTerritoryId,
-                              @PathVariable(BUILDING_ID) String strBuildingId,
-                              @ApiParam(value = "A JSON value representing the room.") @RequestBody Room room) throws ThingsboardException {
+           @ApiParam(value = TERRITORY_ID_PARAM_DESCRIPTION)
+           @PathVariable(TERRITORY_ID) String strTerritoryId,
+           @ApiParam(value = BUILDING_ID_PARAM_DESCRIPTION)
+           @PathVariable(BUILDING_ID) String strBuildingId,
+           @ApiParam(value = "A JSON value representing the room.") @RequestBody Room room) throws ThingsboardException {
         checkRelations(List.of(
                 assetId(strTerritoryId),
                 assetId(strBuildingId)
@@ -241,8 +243,11 @@ public class TopologyController extends BaseController {
     @RequestMapping(value = "/territory/{territoryId}/building/{buildingId}/room/{roomId}", method = RequestMethod.GET)
     @ResponseBody
     public Room getRoomById(
+            @ApiParam(value = TERRITORY_ID_PARAM_DESCRIPTION)
             @PathVariable(TERRITORY_ID) String strTerritoryId,
+            @ApiParam(value = BUILDING_ID_PARAM_DESCRIPTION)
             @PathVariable(BUILDING_ID) String strBuildingId,
+            @ApiParam(value = ROOM_ID_PARAM_DESCRIPTION)
             @PathVariable(ROOM_ID) String strRoomId
     ) throws ThingsboardException {
         checkRelations(List.of(
@@ -254,13 +259,16 @@ public class TopologyController extends BaseController {
     }
 
     @ApiOperation(value = "Delete Room",
-            notes = "Deletes the Room and all the relations (from and to the asset). Referencing non-existing asset Id will cause an error." + TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH)
+            notes = "Deletes the Room and all the relations (from and to the asset). Referencing non-existing asset Id will cause an error." + TENANT_ADMIN_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
     @RequestMapping(value = "/territory/{territoryId}/building/{buildingId}/room/{roomId}", method = RequestMethod.DELETE)
     @ResponseStatus(value = HttpStatus.OK)
     public void deleteRoom(
+            @ApiParam(value = TERRITORY_ID_PARAM_DESCRIPTION)
             @PathVariable(TERRITORY_ID) String strTerritoryId,
+            @ApiParam(value = BUILDING_ID_PARAM_DESCRIPTION)
             @PathVariable(BUILDING_ID) String strBuildingId,
+            @ApiParam(value = ROOM_ID_PARAM_DESCRIPTION)
             @PathVariable(ROOM_ID) String strRoomId
     ) throws ThingsboardException {
         checkRelations(List.of(
@@ -274,13 +282,14 @@ public class TopologyController extends BaseController {
 
     @ApiOperation(value = "Find related buildings",
             notes = "Returns all assets that are related to the specific entity. " +
-                    "The entity id, relation type, asset types, depth of the search, and other query parameters defined using complex 'AssetSearchQuery' object. " +
                     "See 'Model' tab of the Parameters for more info.", produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/territory/{territoryId}/building/{buildingId}/rooms", method = RequestMethod.GET)
     @ResponseBody
     public PageData<Room> findRoomsByQuery(
+            @ApiParam(value = TERRITORY_ID_PARAM_DESCRIPTION)
             @PathVariable(TERRITORY_ID) String strTerritoryId,
+            @ApiParam(value = BUILDING_ID_PARAM_DESCRIPTION)
             @PathVariable(BUILDING_ID) String strBuildingId,
             @ApiParam(value = PAGE_SIZE_DESCRIPTION)
             @RequestParam int pageSize,
@@ -305,14 +314,18 @@ public class TopologyController extends BaseController {
     }
 
     @ApiOperation(value = "Delete Device",
-            notes = "Deletes the Device and all the relations (from and to the asset). Referencing non-existing asset Id will cause an error." + TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH)
+            notes = "Deletes the Device and all the relations (from and to the asset). Referencing non-existing asset Id will cause an error." + TENANT_ADMIN_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
     @RequestMapping(value = "/territory/{territoryId}/building/{buildingId}/room/{roomId}/device/{deviceId}", method = RequestMethod.DELETE)
     @ResponseStatus(value = HttpStatus.OK)
     public void deleteRoom(
+            @ApiParam(value = TERRITORY_ID_PARAM_DESCRIPTION)
             @PathVariable(TERRITORY_ID) String strTerritoryId,
+            @ApiParam(value = BUILDING_ID_PARAM_DESCRIPTION)
             @PathVariable(BUILDING_ID) String strBuildingId,
+            @ApiParam(value = ROOM_ID_PARAM_DESCRIPTION)
             @PathVariable(ROOM_ID) String strRoomId,
+            @ApiParam(value = DEVICE_ID_PARAM_DESCRIPTION)
             @PathVariable(DEVICE_ID) String strDeviceId
     ) throws ThingsboardException {
         checkRelations(List.of(
@@ -379,13 +392,23 @@ public class TopologyController extends BaseController {
 
     @ApiOperation(value = "Find related device assignments",
             notes = "Returns all assets that are related to the specific entity. ", produces = MediaType.APPLICATION_JSON_VALUE)
-    @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
+    @PreAuthorize("hasAnyAuthority('TENANT_ADMIN')")
     @RequestMapping(value = "/territory/{territoryId}/building/{buildingId}/room/{roomId}/devices", method = RequestMethod.GET)
     @ResponseBody
-    public List<TopologyDevice> findDevicesByQuery(
+    public PageData<TopologyDevice> findDevicesByQuery(
             @PathVariable(TERRITORY_ID) String strTerritoryId,
             @PathVariable(BUILDING_ID) String strBuildingId,
-            @PathVariable(ROOM_ID) String strRoomId
+            @PathVariable(ROOM_ID) String strRoomId,
+            @ApiParam(value = PAGE_SIZE_DESCRIPTION)
+            @RequestParam int pageSize,
+            @ApiParam(value = PAGE_NUMBER_DESCRIPTION)
+            @RequestParam int page,
+            @ApiParam(value = ASSET_TEXT_SEARCH_DESCRIPTION)
+            @RequestParam(required = false) String textSearch,
+            @ApiParam(value = SORT_PROPERTY_DESCRIPTION, allowableValues = ASSET_SORT_PROPERTY_ALLOWABLE_VALUES)
+            @RequestParam(required = false) String sortProperty,
+            @ApiParam(value = SORT_ORDER_DESCRIPTION, allowableValues = SORT_ORDER_ALLOWABLE_VALUES)
+            @RequestParam(required = false) String sortOrder
     ) throws ThingsboardException {
         checkRelations(List.of(
                 assetId(strTerritoryId),
@@ -393,23 +416,19 @@ public class TopologyController extends BaseController {
                 assetId(strRoomId)
         ));
 
-        RelationsSearchParameters relationParameters = new RelationsSearchParameters(
-                EntityIdFactory.getByTypeAndUuid(EntityType.ASSET, strRoomId),
-                EntitySearchDirection.FROM,
-                1,
-                false
-        );
+        try {
+            TenantId tenantId = getCurrentUser().getTenantId();
+            CustomerId customerId = getCurrentUser().getCustomerId();
 
-        EntityRelationsQuery searchQuery = new EntityRelationsQuery();
-        searchQuery.setFilters(List.of(
-                new RelationEntityTypeFilter(RELATION_TYPE_CONTAINS, List.of(EntityType.DEVICE))));
-        searchQuery.setParameters(relationParameters);
-
-        List<EntityRelation> relations = relationController.findByQuery(searchQuery);
-        List<Device> devices = deviceController.getDevicesByIds(relations.stream().map(e -> e.getTo().getId().toString()).toArray(String[]::new));
-        return devices.stream()
-                .map(d -> converter.from(d))
-                .collect(Collectors.toList());
+            var query = NarrowDeviceSearchQuery.builder()
+                    .parent(AssetId.fromString(strRoomId))
+                    .pageLink(createPageLink(pageSize, page, textSearch, sortProperty, sortOrder))
+                    .build();
+            var devices = deviceService.findDevicesByTenantIdAndQuery(tenantId, customerId, query);
+            return converter.toPage(devices);
+        } catch (Exception e) {
+            throw handleException(e);
+        }
     }
 
     @SneakyThrows
@@ -436,33 +455,8 @@ public class TopologyController extends BaseController {
     }
 
     void deleteGeneric(String strId) throws ThingsboardException {
+        checkAssetId(AssetId.fromString(strId), Operation.DELETE);
         assetController.deleteAsset(strId);
-    }
-
-    @SneakyThrows
-    protected <T extends BaseWrapper> List<T> findAllItems(Class<T> targetClass, TopologyLevel type, String parentId) throws ThingsboardException {
-        RelationsSearchParameters relationParameters = new RelationsSearchParameters(
-                EntityIdFactory.getByTypeAndUuid(EntityType.ASSET, parentId),
-                EntitySearchDirection.FROM,
-                1,
-                false
-        );
-
-        AssetSearchQuery searchQuery = new AssetSearchQuery();
-        searchQuery.setAssetTypes(List.of(type.getKey()));
-        searchQuery.setRelationType(RELATION_TYPE_CONTAINS);
-        searchQuery.setParameters(relationParameters);
-
-        Constructor<T> constructor = targetClass.getConstructor();
-        return assetController.findByQuery(searchQuery).stream().map(
-                        a -> {
-                            try {
-                                return converter.assign(constructor.newInstance(), a);
-                            } catch (Exception e) {
-                                throw new RuntimeException(e);
-                            }
-                        })
-                .collect(Collectors.toList());
     }
 
     private void checkRelations(List<EntityId> levels) throws ThingsboardException {
@@ -497,10 +491,12 @@ public class TopologyController extends BaseController {
 
     private <T extends BaseWrapper> PageData<T> getPageData(String parentId, Class<T> targetClass, TopologyLevel type, int pageSize, int page, String textSearch, String sortProperty, String sortOrder) throws ThingsboardException {
         var tenantId = getCurrentUser().getTenantId();
+        checkTenantId(tenantId, Operation.READ);
+
         var customerId = getCurrentUser().getCustomerId();
         var parent = nonNull(parentId) ? AssetId.fromString(parentId) : null;
 
-        var query = ChildrenSearchQuery.builder()
+        var query = NarrowAssetSearchQuery.builder()
                 .type(type.getKey())
                 .parent(parent)
                 .pageLink(createPageLink(pageSize, page, textSearch, sortProperty, sortOrder))

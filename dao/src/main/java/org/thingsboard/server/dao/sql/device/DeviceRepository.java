@@ -179,7 +179,16 @@ public interface DeviceRepository extends JpaRepository<DeviceEntity, UUID> {
                                                                          @Param("type") String type,
                                                                          @Param("textSearch") String textSearch,
                                                                          Pageable pageable);
-
+    @Query("SELECT d FROM DeviceEntity d, RelationEntity re WHERE d.tenantId = :tenantId " +
+            "AND d.id = re.toId " +
+            "AND d.customerId = :customerId " +
+            "AND re.fromId = :parentId " +
+            "AND LOWER(d.searchText) LIKE LOWER(CONCAT('%', :searchText, '%'))")
+    Page<DeviceEntity> findByTenantIdAndCustomerIdAndParentId(@Param("tenantId") UUID tenantId,
+                                                        @Param("customerId") UUID customerId,
+                                                        @Param("parentId") UUID parentId,
+                                                        @Param("searchText") String searchText,
+                                                        Pageable pageable);
     @Query("SELECT new org.thingsboard.server.dao.model.sql.DeviceInfoEntity(d, c.title, c.additionalInfo, p.name) " +
             "FROM DeviceEntity d " +
             "LEFT JOIN CustomerEntity c on c.id = d.customerId " +
@@ -244,4 +253,6 @@ public interface DeviceRepository extends JpaRepository<DeviceEntity, UUID> {
             "INNER JOIN DeviceProfileEntity p ON d.deviceProfileId = p.id " +
             "WHERE p.transportType = :transportType")
     Page<UUID> findIdsByDeviceProfileTransportType(@Param("transportType") DeviceTransportType transportType, Pageable pageable);
+
+
 }

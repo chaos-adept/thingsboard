@@ -54,6 +54,7 @@ public class ControllerConstants {
     protected static final String SYSTEM_OR_TENANT_AUTHORITY_PARAGRAPH = "\n\nAvailable for users with 'SYS_ADMIN' or 'TENANT_ADMIN' authority.";
     protected static final String TENANT_AUTHORITY_PARAGRAPH = "\n\nAvailable for users with 'TENANT_ADMIN' authority.";
     protected static final String TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH = "\n\nAvailable for users with 'TENANT_ADMIN' or 'CUSTOMER_USER' authority.";
+    protected static final String TENANT_ADMIN_AUTHORITY_PARAGRAPH = "\n\nAvailable for users with 'TENANT_ADMIN' authority.";
     protected static final String CUSTOMER_AUTHORITY_PARAGRAPH = "\n\nAvailable for users with 'CUSTOMER_USER' authority.";
     protected static final String AVAILABLE_FOR_ANY_AUTHORIZED_USER = "\n\nAvailable for any authorized user. ";
     protected static final String PAGE_SIZE_DESCRIPTION = "Maximum amount of entities in a one page";
@@ -73,6 +74,8 @@ public class ControllerConstants {
     protected static final String TENANT_TEXT_SEARCH_DESCRIPTION = "The case insensitive 'substring' filter based on the tenant name.";
     protected static final String TENANT_PROFILE_TEXT_SEARCH_DESCRIPTION = "The case insensitive 'substring' filter based on the tenant profile name.";
     protected static final String TERRITORY_ID_PARAM_DESCRIPTION = "Territory Id";
+    protected static final String BUILDING_ID_PARAM_DESCRIPTION = "Building Id";
+    protected static final String ROOM_ID_PARAM_DESCRIPTION = "Room Id";
     protected static final String RULE_CHAIN_TEXT_SEARCH_DESCRIPTION = "The case insensitive 'substring' filter based on the rule chain name.";
     protected static final String DEVICE_PROFILE_TEXT_SEARCH_DESCRIPTION = "The case insensitive 'substring' filter based on the device profile name.";
     protected static final String CUSTOMER_TEXT_SEARCH_DESCRIPTION = "The case insensitive 'substring' filter based on the customer title.";

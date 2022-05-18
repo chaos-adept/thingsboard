@@ -189,12 +189,13 @@ public abstract class BaseTopologyControllerTest extends AbstractControllerTest 
                 DeviceId.fromString(savedDevice.getId()),
                 EntityRelation.CONTAINS_TYPE, RelationTypeGroup.COMMON).get());
 
-        var tr = new TypeReference<List<TopologyDevice>>() {};
-        List<TopologyDevice> deviceList = doGetTyped(
-                "/api/topology/territory/{territoryId}/building/{buildingId}/room/{roomId}/devices",
+        var tr = new TypeReference<PageData<TopologyDevice>>() {};
+        PageData<TopologyDevice> deviceList = doGetTypedWithPageLink(
+                "/api/topology/territory/{territoryId}/building/{buildingId}/room/{roomId}/devices?",
                 tr,
+                getDefaultPageLink(),
                 territory.getId(), building.getId(), room.getId());
-        Assert.assertEquals(deviceList.get(0).getId(), savedDevice.getId());
+        Assert.assertEquals(deviceList.getData().get(0).getId(), savedDevice.getId());
     }
 
     private void assertRelation(String from, String to) throws InterruptedException, ExecutionException {
