@@ -304,6 +304,7 @@ public class JpaDeviceDao extends JpaAbstractSearchTextDao<DeviceEntity, Device>
                         DaoUtil.toPageable(pageLink)));
     }
 
+    @Override
     public PageData<Device> findDevicesByTenantIdAndQuery(UUID tenantId, NarrowDeviceSearchQuery query) {
         log.debug("Try to find devices by tenantId [{}],  parent [{}] and pageLink [{}]", tenantId, query.getParent(), query.getPageLink());
         return DaoUtil.toPageData(deviceRepository

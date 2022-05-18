@@ -114,7 +114,6 @@ public interface AssetDao extends Dao<Asset>, TenantEntityDao {
      * Find assets by tenantId, customerId and children query.
      *
      * @param tenantId the tenantId
-     * @param customerId the customerId
      * @param query the query with parent information to filter children
      * @return the list of asset objects
      */

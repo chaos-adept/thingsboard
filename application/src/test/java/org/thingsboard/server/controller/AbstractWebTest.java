@@ -519,10 +519,6 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
         return readResponse(doPost(urlTemplate, content, params).andExpect(status().isOk()), responseClass);
     }
 
-    protected <T, R> R doPostWithResponse(String urlTemplate, T content, TypeReference<R> responseClass, String... params) throws Exception {
-        return readResponse(doPost(urlTemplate, content, params).andExpect(status().isOk()), responseClass);
-    }
-
     protected <T, R> R doPostWithTypedResponse(String urlTemplate, T content, TypeReference<R> responseType, String... params) throws Exception {
         return readResponse(doPost(urlTemplate, content, params).andExpect(status().isOk()), responseType);
     }

@@ -28,7 +28,7 @@ import org.apache.commons.lang3.StringUtils;
 @AllArgsConstructor
 @NoArgsConstructor
 @SuperBuilder
-@ApiModel(description = "DTO for asset representation")
+@ApiModel(description = "DTO for entity representation, actually wrapper for Asset and Device")
 public abstract class BaseWrapper {
 
     @ApiModelProperty(position = 1, value = "Unique Id")
