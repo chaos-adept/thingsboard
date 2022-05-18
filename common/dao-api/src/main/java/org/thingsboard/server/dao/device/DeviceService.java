@@ -110,5 +110,5 @@ public interface DeviceService {
 
     long countByTenantId(TenantId tenantId);
 
-    PageData<Device> findDevicesByTenantIdAndQuery(TenantId tenantId, CustomerId customerId, NarrowDeviceSearchQuery query);
+    PageData<Device> findDevicesByTenantIdAndQuery(TenantId tenantId, NarrowDeviceSearchQuery query);
 }

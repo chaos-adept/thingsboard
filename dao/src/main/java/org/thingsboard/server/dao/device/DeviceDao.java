@@ -261,9 +261,8 @@ public interface DeviceDao extends Dao<Device>, TenantEntityDao {
      * Find devices by tenantId, customerId, type and query.
      *
      * @param tenantId the tenantId
-     * @param customerId the customerId
      * @param query the page query
      * @return the list of device objects
      */
-    PageData<Device> findDevicesByTenantIdAndCustomerIdAndQuery(UUID tenantId, UUID customerId, NarrowDeviceSearchQuery query);
+    PageData<Device> findDevicesByTenantIdAndQuery(UUID tenantId, NarrowDeviceSearchQuery query);
 }

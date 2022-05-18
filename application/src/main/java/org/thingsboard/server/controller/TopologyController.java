@@ -394,7 +394,10 @@ public class TopologyController extends BaseController {
     }
 
     @ApiOperation(value = "Find related device assignments",
-            notes = "Returns all assets that are related to the specific entity. ", produces = MediaType.APPLICATION_JSON_VALUE)
+            notes = "Returns all assets that are related to the specific entity. " +
+                    "If the user has the authority of 'Tenant Administrator', the server checks that the asset is owned by the same tenant. " +
+                    "If the user has the authority of 'Customer User', the server checks that the asset is assigned to the same customer." + TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH,
+            produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN')")
     @RequestMapping(value = "/territory/{territoryId}/building/{buildingId}/room/{roomId}/devices", method = RequestMethod.GET)
     @ResponseBody
@@ -421,13 +424,17 @@ public class TopologyController extends BaseController {
 
         try {
             TenantId tenantId = getCurrentUser().getTenantId();
-            CustomerId customerId = getCurrentUser().getCustomerId();
 
             var query = NarrowDeviceSearchQuery.builder()
                     .parent(AssetId.fromString(strRoomId))
                     .pageLink(createPageLink(pageSize, page, textSearch, sortProperty, sortOrder))
                     .build();
-            var devices = deviceService.findDevicesByTenantIdAndQuery(tenantId, customerId, query);
+            var devices = deviceService.findDevicesByTenantIdAndQuery(tenantId, query);
+
+            for (var device:devices.getData()) {
+                checkDeviceId(device.getId(), Operation.READ);
+            }
+
             return converter.toPage(devices);
         } catch (Exception e) {
             throw handleException(e);

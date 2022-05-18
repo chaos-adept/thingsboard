@@ -437,13 +437,11 @@ public class DeviceServiceImpl extends AbstractEntityService implements DeviceSe
 
 
     @Override
-    public PageData<Device> findDevicesByTenantIdAndQuery(TenantId tenantId, CustomerId customerId, NarrowDeviceSearchQuery query) {
-        log.trace("Executing findDeviceInfosByTenantIdAndCustomerId, tenantId [{}], customerId [{}], pageLink [{}]", tenantId, customerId, query.getPageLink());
+    public PageData<Device> findDevicesByTenantIdAndQuery(TenantId tenantId, NarrowDeviceSearchQuery query) {
+        log.trace("Executing findDeviceInfosByTenantIdAndCustomerId, tenantId [{}], pageLink [{}]", tenantId, query.getPageLink());
         validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
-        validateId(customerId, INCORRECT_CUSTOMER_ID + customerId);
-        validateId(query.getParent().getId(), INCORRECT_CUSTOMER_ID + query.getParent().getId());
         validatePageLink(query.getPageLink());
-        return deviceDao.findDevicesByTenantIdAndCustomerIdAndQuery(tenantId.getId(), customerId.getId(), query);
+        return deviceDao.findDevicesByTenantIdAndQuery(tenantId.getId(), query);
     }
 
     @Override
