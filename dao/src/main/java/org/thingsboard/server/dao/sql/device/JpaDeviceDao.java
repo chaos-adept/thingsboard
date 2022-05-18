@@ -34,6 +34,7 @@ import org.thingsboard.server.common.data.ota.OtaPackageType;
 import org.thingsboard.server.common.data.ota.OtaPackageUtil;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.common.data.topology.NarrowDeviceSearchQuery;
 import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.device.DeviceDao;
 import org.thingsboard.server.dao.model.sql.DeviceEntity;
@@ -301,5 +302,16 @@ public class JpaDeviceDao extends JpaAbstractSearchTextDao<DeviceEntity, Device>
                         type,
                         Objects.toString(pageLink.getTextSearch(), ""),
                         DaoUtil.toPageable(pageLink)));
+    }
+
+    @Override
+    public PageData<Device> findDevicesByTenantIdAndQuery(UUID tenantId, NarrowDeviceSearchQuery query) {
+        log.debug("Try to find devices by tenantId [{}],  parent [{}] and pageLink [{}]", tenantId, query.getParent(), query.getPageLink());
+        return DaoUtil.toPageData(deviceRepository
+                .findByTenantIdAndParentId(
+                        tenantId,
+                        query.getParent().getId(),
+                        Objects.toString(query.getPageLink().getTextSearch(), ""),
+                        DaoUtil.toPageable(query.getPageLink())));
     }
 }

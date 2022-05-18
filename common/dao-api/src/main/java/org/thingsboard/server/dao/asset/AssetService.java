@@ -26,10 +26,9 @@ import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
-import org.thingsboard.server.common.data.page.TimePageLink;
+import org.thingsboard.server.common.data.topology.NarrowAssetSearchQuery;
 
 import java.util.List;
-import java.util.Optional;
 
 public interface AssetService {
 
@@ -62,6 +61,8 @@ public interface AssetService {
     void deleteAssetsByTenantId(TenantId tenantId);
 
     PageData<Asset> findAssetsByTenantIdAndCustomerId(TenantId tenantId, CustomerId customerId, PageLink pageLink);
+
+    PageData<Asset> findAssetsByQuery(TenantId tenantId, NarrowAssetSearchQuery query);
 
     PageData<AssetInfo> findAssetInfosByTenantIdAndCustomerId(TenantId tenantId, CustomerId customerId, PageLink pageLink);
 

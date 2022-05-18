@@ -42,6 +42,7 @@ import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.EntitySearchDirection;
 import org.thingsboard.server.common.data.relation.RelationTypeGroup;
+import org.thingsboard.server.common.data.topology.NarrowAssetSearchQuery;
 import org.thingsboard.server.dao.cache.EntitiesCacheManager;
 import org.thingsboard.server.dao.entity.AbstractEntityService;
 import org.thingsboard.server.dao.exception.DataValidationException;
@@ -55,6 +56,7 @@ import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
+import static java.util.Objects.nonNull;
 import static org.thingsboard.server.common.data.CacheConstants.ASSET_CACHE;
 import static org.thingsboard.server.dao.DaoUtil.toUUIDs;
 import static org.thingsboard.server.dao.service.Validator.validateId;
@@ -221,6 +223,19 @@ public class BaseAssetService extends AbstractEntityService implements AssetServ
         validateId(customerId, INCORRECT_CUSTOMER_ID + customerId);
         validatePageLink(pageLink);
         return assetDao.findAssetsByTenantIdAndCustomerId(tenantId.getId(), customerId.getId(), pageLink);
+    }
+
+    public PageData<Asset> findAssetsByQuery(TenantId tenantId, NarrowAssetSearchQuery query) {
+        log.trace("Executing findAssetsByTenantIdAndCustomerId, tenantId [{}], entityId [{}], pageLink [{}]", tenantId, query.getParent(), query.getPageLink());
+        validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
+
+        if (nonNull(query.getParent())) {
+            validateId(query.getParent().getId(), INCORRECT_ASSET_ID + query.getParent().getId());
+        }
+
+        validatePageLink(query.getPageLink());
+
+        return assetDao.findAssetsByQuery(tenantId.getId(), query);
     }
 
     @Override

@@ -62,6 +62,7 @@ import org.thingsboard.server.common.data.relation.EntitySearchDirection;
 import org.thingsboard.server.common.data.relation.RelationTypeGroup;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.common.data.security.DeviceCredentialsType;
+import org.thingsboard.server.common.data.topology.NarrowDeviceSearchQuery;
 import org.thingsboard.server.dao.cache.EntitiesCacheManager;
 import org.thingsboard.server.dao.device.provision.ProvisionFailedException;
 import org.thingsboard.server.dao.device.provision.ProvisionRequest;
@@ -432,6 +433,15 @@ public class DeviceServiceImpl extends AbstractEntityService implements DeviceSe
         validateId(customerId, INCORRECT_CUSTOMER_ID + customerId);
         validatePageLink(pageLink);
         return deviceDao.findDevicesByTenantIdAndCustomerId(tenantId.getId(), customerId.getId(), pageLink);
+    }
+
+
+    @Override
+    public PageData<Device> findDevicesByTenantIdAndQuery(TenantId tenantId, NarrowDeviceSearchQuery query) {
+        log.trace("Executing findDeviceInfosByTenantIdAndCustomerId, tenantId [{}], pageLink [{}]", tenantId, query.getPageLink());
+        validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
+        validatePageLink(query.getPageLink());
+        return deviceDao.findDevicesByTenantIdAndQuery(tenantId.getId(), query);
     }
 
     @Override

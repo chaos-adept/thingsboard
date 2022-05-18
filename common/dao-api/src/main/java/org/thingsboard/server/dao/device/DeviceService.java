@@ -31,6 +31,7 @@ import org.thingsboard.server.common.data.ota.OtaPackageType;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
+import org.thingsboard.server.common.data.topology.NarrowDeviceSearchQuery;
 import org.thingsboard.server.dao.device.provision.ProvisionRequest;
 
 import java.util.List;
@@ -111,4 +112,6 @@ public interface DeviceService {
     PageData<Device> findDevicesByTenantIdAndEdgeIdAndType(TenantId tenantId, EdgeId edgeId, String type, PageLink pageLink);
 
     long countByTenantId(TenantId tenantId);
+
+    PageData<Device> findDevicesByTenantIdAndQuery(TenantId tenantId, NarrowDeviceSearchQuery query);
 }

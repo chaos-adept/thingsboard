@@ -15,9 +15,7 @@
  */
 package org.thingsboard.server.dao.sql.asset;
 
-import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.MoreExecutors;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.repository.CrudRepository;
@@ -26,18 +24,14 @@ import org.thingsboard.server.common.data.EntitySubtype;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.asset.AssetInfo;
-import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
-import org.thingsboard.server.common.data.page.TimePageLink;
-import org.thingsboard.server.common.data.relation.EntityRelation;
-import org.thingsboard.server.common.data.relation.RelationTypeGroup;
+import org.thingsboard.server.common.data.topology.NarrowAssetSearchQuery;
 import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.asset.AssetDao;
 import org.thingsboard.server.dao.model.sql.AssetEntity;
 import org.thingsboard.server.dao.model.sql.AssetInfoEntity;
-import org.thingsboard.server.dao.relation.RelationDao;
 import org.thingsboard.server.dao.sql.JpaAbstractSearchTextDao;
 
 import java.util.ArrayList;
@@ -47,6 +41,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 
+import static java.util.Objects.nonNull;
 import static org.thingsboard.server.dao.asset.BaseAssetService.TB_SERVICE_QUEUE;
 
 /**
@@ -106,6 +101,26 @@ public class JpaAssetDao extends JpaAbstractSearchTextDao<AssetEntity, Asset> im
                         customerId,
                         Objects.toString(pageLink.getTextSearch(), ""),
                         DaoUtil.toPageable(pageLink)));
+    }
+
+    @Override
+    public PageData<Asset> findAssetsByQuery(UUID tenantId, NarrowAssetSearchQuery query) {
+        if (nonNull(query.getParent())) {
+            return DaoUtil.toPageData(assetRepository
+                    .findByTenantIdAndTypeAndParent(
+                            tenantId,
+                            query.getType(),
+                            query.getParent().getId(),
+                            Objects.toString(query.getPageLink().getTextSearch(), ""),
+                            DaoUtil.toPageable(query.getPageLink())));
+        } else {
+            return DaoUtil.toPageData(assetRepository
+                    .findByTenantIdAndType(
+                            tenantId,
+                            query.getType(),
+                            Objects.toString(query.getPageLink().getTextSearch(), ""),
+                            DaoUtil.toPageable(query.getPageLink())));
+        }
     }
 
     @Override

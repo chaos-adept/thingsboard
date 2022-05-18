@@ -24,6 +24,7 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.ota.OtaPackageType;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.common.data.topology.NarrowDeviceSearchQuery;
 import org.thingsboard.server.dao.Dao;
 import org.thingsboard.server.dao.TenantEntityDao;
 
@@ -255,4 +256,13 @@ public interface DeviceDao extends Dao<Device>, TenantEntityDao {
      * @return the list of device objects
      */
     PageData<Device> findDevicesByTenantIdAndEdgeIdAndType(UUID tenantId, UUID edgeId, String type, PageLink pageLink);
+
+    /**
+     * Find devices by tenantId, customerId, type and query.
+     *
+     * @param tenantId the tenantId
+     * @param query the page query
+     * @return the list of device objects
+     */
+    PageData<Device> findDevicesByTenantIdAndQuery(UUID tenantId, NarrowDeviceSearchQuery query);
 }
